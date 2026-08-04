@@ -2,9 +2,8 @@
 
 namespace App\Filament\Resources\Documents\Pages;
 
+use App\Actions\ChunkDocument;
 use App\Filament\Resources\Documents\DocumentResource;
-use App\Models\Chunk;
-use App\Services\TextChunker;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Storage;
 use Smalot\PdfParser\Parser;
@@ -36,15 +35,7 @@ class CreateDocument extends CreateRecord
 
     protected function afterCreate(): void
     {
-        $chunks = TextChunker::chunk($this->record->content);
-
-        foreach ($chunks as $index=>$text) {
-            Chunk::create([
-                'document_id' => $this->record->id,
-                'chunk_index' => $index,
-                'content' => $text,
-            ]);
-        }
+        (new ChunkDocument)->handle($this->record);
 
     }
 }

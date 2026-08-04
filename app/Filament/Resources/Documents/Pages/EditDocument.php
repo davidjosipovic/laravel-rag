@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Documents\Pages;
 
+use App\Actions\ChunkDocument;
 use App\Filament\Resources\Documents\DocumentResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
@@ -39,5 +40,13 @@ class EditDocument extends EditRecord
         $data['mime_type'] = Storage::mimeType($data['source_path']);
 
         return $data;
+    }
+
+    protected function afterSave(): void
+    {
+        $this->record->chunks()->delete(); // remove old chunks first
+
+        (new ChunkDocument)->handle($this->record);
+
     }
 }

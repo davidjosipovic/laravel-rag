@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Services;
+namespace App\Actions;
 
 class TextChunker
 {
     /**
      * Split text into overlapping chunks.
      */
-    public static function chunk(string $text, int $chunkSize = 1000, int $overlap = 200): array
+    public function chunk(string $text, int $chunkSize = 1000, int $overlap = 200): array
     {
         $chunks = [];
         $length = mb_strlen($text);

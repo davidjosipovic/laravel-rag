@@ -2,8 +2,11 @@
 
 namespace App\Filament\Resources\Documents\Pages;
 
+use App\Actions\ChunkDocument;
 use App\Filament\Resources\Documents\DocumentResource;
+use App\Models\Chunk;
 use App\Models\Document;
+use App\Actions\TextChunker;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\FileUpload;
@@ -36,8 +39,8 @@ class ListDocuments extends ListRecords
                         $fullpath = $disk->path($path);
                         $pdf = $parser->parseFile($fullpath);
 
-                        $content=$pdf->getText();
-                        $metadata=$pdf->getDetails();
+                        $content = $pdf->getText();
+                        $metadata = $pdf->getDetails();
 
                         $firstLine = trim($content) !== ''
                         ? explode("\n", trim($content))[0]
@@ -47,7 +50,7 @@ class ListDocuments extends ListRecords
                             ?: $firstLine
                             ?: 'Untitled document';
 
-                        Document::create([
+                        $document=Document::create([
                             'title' => $title,
                             'source_path' => $path,
                             'content' => $content,
@@ -55,12 +58,12 @@ class ListDocuments extends ListRecords
                             'mime_type' => Storage::mimeType($path),
                         ]);
 
+                        (new ChunkDocument())->handle($document);
+                     
+
                     }
                 }),
 
         ];
     }
-    
-
-
 }
