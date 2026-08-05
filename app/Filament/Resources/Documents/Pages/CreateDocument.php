@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Documents\Pages;
 
 use App\Actions\ChunkDocument;
+use App\Actions\ExtractPdfData;
 use App\Filament\Resources\Documents\DocumentResource;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Storage;
@@ -15,20 +16,7 @@ class CreateDocument extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
 
-        $disk = Storage::disk('local');
-        $full_path = $disk->path($data['source_path']);
-
-        $parser = new Parser;
-        $pdf = $parser->parseFile($full_path);
-        $data['content'] = $pdf->getText();
-        $data['metadata'] = $pdf->getDetails();
-
-        $firstLine = trim($data['content']) !== '' ? explode("\n", trim($data['content']))[0] : null;
-
-        $data['title'] = trim($data['metadata']['Title'] ?? '')
-            ?: $firstLine
-            ?: 'Untitled document';
-        $data['mime_type'] = Storage::mimeType($data['source_path']);
+        $data = (new ExtractPdfData())->handle($data['source_path']);
 
         return $data;
     }
