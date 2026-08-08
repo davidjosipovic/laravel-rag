@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Documents\Schemas;
 
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Schema;
@@ -13,9 +14,9 @@ class DocumentForm
     {
         return $schema
             ->components([
-                FileUpload::make('source_path')
+                SpatieMediaLibraryFileUpload::make('source_path')
                     ->label('Document file')
-                    ->directory('documents')
+                    ->collection('documents')
                     ->required(),
             ]);
     }

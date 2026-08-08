@@ -20,8 +20,7 @@ class ExtractPdfData
     }
     public function handle($path): array
     {
-        $fullpath = $this->disk->path($path);
-        $pdf = $this->parser->parseFile($fullpath);
+        $pdf = $this->parser->parseFile($path);
 
         $content = $pdf->getText();
         $metadata = $pdf->getDetails();

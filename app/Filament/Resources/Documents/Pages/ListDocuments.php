@@ -10,6 +10,8 @@ use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Storage;
 
 class ListDocuments extends ListRecords
 {
@@ -19,25 +21,45 @@ class ListDocuments extends ListRecords
     {
         return [
             CreateAction::make(),
+
             Action::make('bulkUpload')
                 ->label('Bulk upload PDFs')
                 ->form([
                     FileUpload::make('files')
+                        ->label('Document files')
                         ->multiple()
-                        ->label('Document file')
-                        ->directory('documents')
                         ->disk('local')
+                        ->directory('bulk-staging')
+                        ->acceptedFileTypes(['application/pdf'])
                         ->required(),
                 ])
                 ->action(function (array $data, ExtractPdfData $extractPdfData, ChunkDocument $chunkDocument): void {
+                    $succeeded = 0;
+                    $failed = [];
 
                     foreach ($data['files'] as $path) {
+                        try {
+                            $fullPath = Storage::disk('local')->path($path);
 
-                        $data = $extractPdfData->handle($path);
-                        $document = Document::create($data);
-                        $chunkDocument->handle($document);
+                            $document = Document::create($extractPdfData->handle($fullPath));
 
+                            $document->addMediaFromDisk($path, 'local')
+                                ->toMediaCollection('documents');
+
+                            $chunkDocument->handle($document);
+                            $succeeded++;
+                        } catch (\Throwable $e) {
+                            report($e);
+                            $failed[] = basename($path);
+                            Storage::disk('local')->delete($path);
+                        }
                     }
+
+                    Notification::make()
+                                ->title("Imported {$succeeded} document(s)")
+                                ->body($failed ? 'Failed: ' . implode(', ', $failed) : null)
+                        ->{$failed ? 'warning' : 'success'}()
+                            ->send();
                 }),
 
         ];

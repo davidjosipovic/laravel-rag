@@ -19,18 +19,16 @@ class EditDocument extends EditRecord
         ];
     }
 
-    protected function mutateFormDataBeforeSave(array $data): array
-    {
-        $data = (new ExtractPdfData)->handle($data['source_path']);
-
-        return $data;
-    }
 
     protected function afterSave(): void
     {
-        $this->record->chunks()->delete(); // remove old chunks first
-
-        (new ChunkDocument)->handle($this->record);
+        $this->record->load('media');
+        $path=$this->record->getFirstMedia('documents')->getPath();
+        if ($path){
+            $this->record->update((new ExtractPdfData())->handle($path));
+            (new ChunkDocument)->handle($this->record->refresh());
+        }
+        
 
     }
 }

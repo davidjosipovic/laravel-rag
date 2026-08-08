@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->text('content');
-            $table->string('mime_type');
-            $table->jsonb('metadata');
+            $table->string('title')->nullable();
+            $table->text('content')->nullable();
+            $table->string('mime_type')->nullable();
+            $table->jsonb('metadata')->nullable();
             $table->timestamps();
         });
     }

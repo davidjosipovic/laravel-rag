@@ -13,17 +13,15 @@ class CreateDocument extends CreateRecord
 {
     protected static string $resource = DocumentResource::class;
 
-    protected function mutateFormDataBeforeCreate(array $data): array
-    {
-
-        $data = (new ExtractPdfData())->handle($data['source_path']);
-
-        return $data;
-    }
-
     protected function afterCreate(): void
     {
-        (new ChunkDocument)->handle($this->record);
+        $this->record->load('media');
+        $path=$this->record->getFirstMedia('documents')->getPath();
+        if ($path){
+            $this->record->update((new ExtractPdfData())->handle($path));
+            (new ChunkDocument)->handle($this->record->refresh());
+        }
+        
 
     }
 }
