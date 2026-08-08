@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use Illuminate\Support\Facades\Storage;
+use Paperdoc\Facades\Paperdoc;
 use Smalot\PdfParser\Parser;
 
 class ExtractPdfData
@@ -20,10 +21,12 @@ class ExtractPdfData
     }
     public function handle($path): array
     {
-        $pdf = $this->parser->parseFile($path);
 
-        $content = $pdf->getText();
-        $metadata = $pdf->getDetails();
+        $document=Paperdoc::open($path);
+        $content = Paperdoc::renderAs($document, 'md');
+
+        
+        $metadata = $document->getMetadata();
 
         $firstLine = trim($content) !== ''
         ? explode("\n", trim($content))[0]
@@ -39,7 +42,7 @@ class ExtractPdfData
             'source_path' => $path,
             'content' => $content,
             'metadata' => $metadata,
-            'mime_type' => Storage::mimeType($path),
+            'mime_type' => $document->getThumbnail()['mimeType'],
         ]);
 
     }
