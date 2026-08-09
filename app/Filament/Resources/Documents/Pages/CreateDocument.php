@@ -2,12 +2,15 @@
 
 namespace App\Filament\Resources\Documents\Pages;
 
-use App\Actions\ChunkDocument;
-use App\Actions\ExtractPdfData;
+use App\Jobs\ProcessDocument;
 use App\Filament\Resources\Documents\DocumentResource;
+use App\Jobs\ChunkDocument;
+use App\Jobs\EmbedChunks;
+
+use App\Models\Document;
 use Filament\Resources\Pages\CreateRecord;
-use Illuminate\Support\Facades\Storage;
-use Smalot\PdfParser\Parser;
+use Illuminate\Support\Facades\Bus;
+
 
 class CreateDocument extends CreateRecord
 {
@@ -16,12 +19,19 @@ class CreateDocument extends CreateRecord
     protected function afterCreate(): void
     {
         $this->record->load('media');
-        $path=$this->record->getFirstMedia('documents')->getPath();
-        if ($path){
-            $this->record->update((new ExtractPdfData())->handle($path));
-            (new ChunkDocument)->handle($this->record->refresh());
+        $media = $this->record->getFirstMedia('documents');
+
+        if (!$media) {
+            return;
         }
-        
+       # dd(Document::getFirstMedia('document')->getPath());
+
+        Bus::chain([
+            new ProcessDocument($this->record->id),
+            new ChunkDocument($this->record->id),
+            new EmbedChunks($this->record->id),
+        ])->dispatch();
+
 
     }
 }

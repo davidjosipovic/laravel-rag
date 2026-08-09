@@ -17,7 +17,8 @@ class DocumentForm
                 SpatieMediaLibraryFileUpload::make('source_path')
                     ->label('Document file')
                     ->collection('documents')
-                    ->required(),
+                    ->required()
+                    ->maxSize(204800)
             ]);
     }
 }
