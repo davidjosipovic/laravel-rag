@@ -12,13 +12,6 @@ class ExtractPdfData
      * Split text into overlapping chunks.
      */
 
-    private  $disk;
-    private $parser;
-
-    public function __construct(){
-        $this->disk = Storage::disk('local');
-        $this->parser = new Parser();
-    }
     public function handle($path): array
     {
 

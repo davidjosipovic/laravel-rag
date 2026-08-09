@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use App\Models\Chunk;
+use Illuminate\Support\Str;
 
 class ChunkDocument
 {
@@ -17,6 +18,7 @@ class ChunkDocument
             Chunk::create([
                 'document_id' => $record->id,
                 'chunk_index' => $index,
+                'embedding'=>Str::of($text)->toEmbeddings(),
                 'content' => $text,
             ]);
         }
