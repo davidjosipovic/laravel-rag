@@ -10,6 +10,7 @@ use Pgvector\Laravel\Vector;
 class Chunk extends Model
 {   
     use HasNeighbors;
+    protected $hidden=['embedding'];
     protected $fillable=['document_id','chunk_index','metadata','embedding','content'];
     protected $casts=['metadata'=>'array','embedding'=>Vector::class];
 

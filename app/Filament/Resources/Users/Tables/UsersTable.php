@@ -22,6 +22,8 @@ class UsersTable
                 TextColumn::make('email_verified_at')
                     ->dateTime()
                     ->sortable(),
+                TextColumn::make('is_admin')
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

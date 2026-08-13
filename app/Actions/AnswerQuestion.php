@@ -11,10 +11,12 @@ class AnswerQuestion
     {
         $chunks = Chunk::whereVectorSimilarTo('embedding', $question)
             ->limit($top_k)
+            ->with('document')
             ->get();
 
-        $agent = new Rag();
-        $response = $agent->prompt($question, $chunks->pluck('content')->all());
+        $agent = new Rag($chunks);
+
+        $response = $agent->prompt($question);
 
         $decoded = json_decode($response->text, true);
 

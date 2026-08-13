@@ -2,9 +2,7 @@
 
 namespace App\Actions;
 
-use Illuminate\Support\Facades\Storage;
 use Paperdoc\Facades\Paperdoc;
-use Smalot\PdfParser\Parser;
 
 class ExtractPdfData
 {
