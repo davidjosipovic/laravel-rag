@@ -19,17 +19,7 @@ class ExtractPdfData
         
         $metadata = $document->getMetadata();
 
-        $firstLine = trim($content) !== ''
-        ? explode("\n", trim($content))[0]
-        : null;
-
-        $title = trim($metadata['Title'] ?? '')
-            ?: $firstLine
-            ?: 'Untitled document';
-            
-
         return([
-            'title' => $title,
             'source_path' => $path,
             'content' => $content,
             'metadata' => $metadata,

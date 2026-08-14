@@ -24,7 +24,6 @@ class CreateDocument extends CreateRecord
         if (!$media) {
             return;
         }
-       # dd(Document::getFirstMedia('document')->getPath());
 
         Bus::chain([
             new ProcessDocument($this->record->id),
