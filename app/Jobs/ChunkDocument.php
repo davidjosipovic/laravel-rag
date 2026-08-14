@@ -26,6 +26,8 @@ class ChunkDocument implements ShouldQueue
     public function handle(): void
     {
         $document=Document::findOrFail($this->documentId);
+        $document->update(['status'=>'chunking']);
+
         $chunks =  (new TextChunker())->chunk($document->content);
 
         foreach ($chunks as $index => $text) {

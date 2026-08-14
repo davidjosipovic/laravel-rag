@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('title')->nullable();
             $table->text('content')->nullable();
             $table->string('mime_type')->nullable();
+            $table->string('status')->default('pending');
             $table->jsonb('metadata')->nullable();
             $table->timestamps();
         });

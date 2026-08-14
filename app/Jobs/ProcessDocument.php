@@ -25,6 +25,7 @@ class ProcessDocument implements ShouldQueue
     public function handle(ExtractPdfData $extractor): void
     {
         $document=Document::findOrFail($this->documentId);
+        $document->update(['status'=>'processing']);
         $path=$document->getFirstMedia('documents')->getPath();
         $document->update($extractor->handle($path));
     }

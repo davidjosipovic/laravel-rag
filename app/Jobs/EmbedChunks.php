@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Chunk;
+use App\Models\Document;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Laravel\Ai\Embeddings;
@@ -28,6 +29,9 @@ class EmbedChunks implements ShouldQueue
      */
     public function handle(): void
     {
+        $document=Document::findOrFail($this->documentId);
+        $document->update(['status'=>'embedding ']);
+
          Chunk::whereNull('embedding')
             ->where('document_id', $this->documentId)
             ->chunkById(
@@ -39,5 +43,7 @@ class EmbedChunks implements ShouldQueue
                     }
                 }
             );
+        $document->update(['status'=>'done']);
+
     }
 }

@@ -16,12 +16,15 @@ class DocumentsTable
             ->columns([
                 TextColumn::make('title')
                     ->searchable(),
+                TextColumn::make('status')
+                    ->sortable(),
                 TextColumn::make('mime_type')
                     ->searchable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                
                 TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()

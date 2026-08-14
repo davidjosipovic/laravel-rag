@@ -10,7 +10,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 class Document extends Model implements HasMedia
 {
     use InteractsWithMedia;
-    protected $fillable=['content','mime_type','metadata','title'];
+    protected $fillable=['content','mime_type','metadata','title','status'];
     protected $casts=['metadata'=>'array'];
     public function chunks(): HasMany{
         return $this->hasMany(Chunk::class);
