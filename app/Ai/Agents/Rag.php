@@ -18,7 +18,6 @@ class Rag implements Agent, Conversational, HasStructuredOutput, HasTools
 
 
 
-    // App\Ai\Agents\Rag
 public function __construct(protected \Illuminate\Support\Collection $chunks) {}
 
 public function instructions(): string
@@ -26,11 +25,6 @@ public function instructions(): string
     $context = $this->chunks->pluck('content')->implode("\n\n---\n\n");
     return "Answer only using the following context. If the answer isn't in it, say you don't know.\n\nContext:\n{$context}";
 }
-
-    /**
-     * Get the instructions that the agent should follow.
-     */
-    
     /**
      * Get the list of messages comprising the conversation so far.
      *

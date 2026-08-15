@@ -35,7 +35,7 @@ class ListDocuments extends ListRecords
                         ->required()
                         ->maxSize(204800),
                 ])
-                 ->action(function (array $data): void {
+                ->action(function (array $data): void {
                     /** @var TemporaryUploadedFile[] $files */
                     $files = $data['files'];
 
@@ -57,7 +57,7 @@ class ListDocuments extends ListRecords
 
                     Notification::make()
                         ->title('Documents uploaded')
-                        ->body(count($files).' document(s) queued for processing.')
+                        ->body(count($files) . ' document(s) queued for processing.')
                         ->success()
                         ->send();
                 }),

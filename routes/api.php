@@ -11,7 +11,9 @@ Route::get('/user', function (Request $request) {
 
 
 Route::middleware(['auth:sanctum'])->group(function(){
-    Route::post('ask',[QueryController::class, 'ask']);
+    Route::post('/ask',[QueryController::class, 'ask']);
+    Route::post('/logout',[AuthController::class,'logout']);
+
 });
 
 Route::post('/login',[AuthController::class,'login']);
