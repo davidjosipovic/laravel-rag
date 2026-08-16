@@ -2,14 +2,13 @@
 
 namespace App\Filament\Resources\Documents\Pages;
 
-use App\Jobs\ChunkDocument;
 use App\Filament\Resources\Documents\DocumentResource;
+use App\Jobs\ChunkDocument;
 use App\Jobs\EmbedChunks;
 use App\Jobs\ProcessDocument;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Bus;
-
 
 class EditDocument extends EditRecord
 {
@@ -22,13 +21,12 @@ class EditDocument extends EditRecord
         ];
     }
 
-
     protected function afterSave(): void
     {
         $this->record->load('media');
         $media = $this->record->getFirstMedia('documents');
 
-        if (!$media) {
+        if (! $media) {
             return;
         }
 
@@ -37,7 +35,6 @@ class EditDocument extends EditRecord
             new ChunkDocument($this->record->id),
             new EmbedChunks($this->record->id),
         ])->dispatch();
-
 
     }
 }

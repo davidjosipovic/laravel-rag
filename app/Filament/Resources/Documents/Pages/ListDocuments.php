@@ -2,18 +2,17 @@
 
 namespace App\Filament\Resources\Documents\Pages;
 
-
+use App\Filament\Resources\Documents\DocumentResource;
+use App\Jobs\ChunkDocument;
+use App\Jobs\EmbedChunks;
+use App\Jobs\ProcessDocument;
 use App\Models\Document;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\FileUpload;
-use Filament\Resources\Pages\ListRecords;
 use Filament\Notifications\Notification;
+use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\Bus;
-use App\Jobs\ChunkDocument;
-use App\Filament\Resources\Documents\DocumentResource;
-use App\Jobs\EmbedChunks;
-use App\Jobs\ProcessDocument;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class ListDocuments extends ListRecords
@@ -57,7 +56,7 @@ class ListDocuments extends ListRecords
 
                     Notification::make()
                         ->title('Documents uploaded')
-                        ->body(count($files) . ' document(s) queued for processing.')
+                        ->body(count($files).' document(s) queued for processing.')
                         ->success()
                         ->send();
                 }),

@@ -10,7 +10,9 @@ use Illuminate\Foundation\Queue\Queueable;
 class ProcessDocument implements ShouldQueue
 {
     use Queueable;
+
     public int $timeout = 3600;
+
     /**
      * Create a new job instance.
      */
@@ -24,10 +26,9 @@ class ProcessDocument implements ShouldQueue
      */
     public function handle(ExtractPdfData $extractor): void
     {
-        $document=Document::findOrFail($this->documentId);
-        $document->update(['status'=>'processing']);
-        $path=$document->getFirstMedia('documents')->getPath();
+        $document = Document::findOrFail($this->documentId);
+        $document->update(['status' => 'processing']);
+        $path = $document->getFirstMedia('documents')->getPath();
         $document->update($extractor->handle($path));
     }
-    }
-
+}

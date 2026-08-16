@@ -50,21 +50,20 @@ return [
     */
 
     'providers' => [
-        'local' =>
-            [
-                'driver' => 'openai-compatible',
-                'url' => env('LOCAL_AI_URL'),
-                'key' => env('LOCAL_AI_API_KEY'),
-                'models' => [
-                    'text' => [
-                        'default' => env('LOCAL_AI_MODEL'),
-                    ],
-                    'embeddings' => [
-                        'default' => env('LOCAL_AI_EMBEDDING_MODEL'),
-                        'dimensions' => 1024,
-                    ],
+        'local' => [
+            'driver' => 'openai-compatible',
+            'url' => env('LOCAL_AI_URL'),
+            'key' => env('LOCAL_AI_API_KEY'),
+            'models' => [
+                'text' => [
+                    'default' => env('LOCAL_AI_MODEL'),
+                ],
+                'embeddings' => [
+                    'default' => env('LOCAL_AI_EMBEDDING_MODEL'),
+                    'dimensions' => 1024,
                 ],
             ],
+        ],
 
         'anthropic' => [
             'driver' => 'anthropic',

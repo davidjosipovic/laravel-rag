@@ -21,12 +21,12 @@ class AnswerQuestion
         $decoded = json_decode($response->text, true);
 
         $usage = $response->usage;
-$tokensUsed = $usage ? $usage->promptTokens + $usage->completionTokens : null;
+        $tokensUsed = $usage ? $usage->promptTokens + $usage->completionTokens : null;
 
-return [
-    'answer' => $decoded['value'] ?? $response->text,
-    'chunks' => $chunks,
-    'tokens_used' => $tokensUsed,
-];
+        return [
+            'answer' => $decoded['value'] ?? $response->text,
+            'chunks' => $chunks,
+            'tokens_used' => $tokensUsed,
+        ];
     }
 }

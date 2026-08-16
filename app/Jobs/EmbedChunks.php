@@ -15,9 +15,7 @@ class EmbedChunks implements ShouldQueue
     /**
      * Create a new job instance.
      */
-
     public int $tries = 1;
-
 
     public function __construct(public int $documentId)
     {
@@ -29,21 +27,21 @@ class EmbedChunks implements ShouldQueue
      */
     public function handle(): void
     {
-        $document=Document::findOrFail($this->documentId);
-        $document->update(['status'=>'embedding ']);
+        $document = Document::findOrFail($this->documentId);
+        $document->update(['status' => 'embedding ']);
 
-         Chunk::whereNull('embedding')
+        Chunk::whereNull('embedding')
             ->where('document_id', $this->documentId)
             ->chunkById(
                 100,
                 function ($chunks) {
-                    $vectors=Embeddings::for($chunks->pluck('content')->all())->generate()->embeddings;
-                    foreach($chunks as $i=>$chunk){
-                        $chunk->update(['embedding'=> $vectors[$i]]);
+                    $vectors = Embeddings::for($chunks->pluck('content')->all())->generate()->embeddings;
+                    foreach ($chunks as $i => $chunk) {
+                        $chunk->update(['embedding' => $vectors[$i]]);
                     }
                 }
             );
-        $document->update(['status'=>'done']);
+        $document->update(['status' => 'done']);
 
     }
 }

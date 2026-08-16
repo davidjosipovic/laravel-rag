@@ -2,15 +2,12 @@
 
 namespace App\Filament\Resources\Documents\Pages;
 
-use App\Jobs\ProcessDocument;
 use App\Filament\Resources\Documents\DocumentResource;
 use App\Jobs\ChunkDocument;
 use App\Jobs\EmbedChunks;
-
-use App\Models\Document;
+use App\Jobs\ProcessDocument;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Bus;
-
 
 class CreateDocument extends CreateRecord
 {
@@ -21,7 +18,7 @@ class CreateDocument extends CreateRecord
         $this->record->load('media');
         $media = $this->record->getFirstMedia('documents');
 
-        if (!$media) {
+        if (! $media) {
             return;
         }
 
@@ -30,7 +27,6 @@ class CreateDocument extends CreateRecord
             new ChunkDocument($this->record->id),
             new EmbedChunks($this->record->id),
         ])->dispatch();
-
 
     }
 }

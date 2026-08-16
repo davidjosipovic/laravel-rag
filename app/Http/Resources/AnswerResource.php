@@ -14,15 +14,15 @@ class AnswerResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        
+
         return [
-            'answer'=>$this->resource['answer'],
-            'sources'=>collect($this->resource['chunks'])->map(fn($chunk) => [
-                'document_id'=>$chunk->document_id,
-                'document_title'=>$chunk->document->title,
-                'excerpt'=>str($chunk->content)->limit(200)->toString()
+            'answer' => $this->resource['answer'],
+            'sources' => collect($this->resource['chunks'])->map(fn ($chunk) => [
+                'document_id' => $chunk->document_id,
+                'document_title' => $chunk->document->title,
+                'excerpt' => str($chunk->content)->limit(200)->toString(),
             ])->all(),
-            'tokens_used'=>$this->resource['tokens_used'] ?? null,
+            'tokens_used' => $this->resource['tokens_used'] ?? null,
         ];
     }
 }

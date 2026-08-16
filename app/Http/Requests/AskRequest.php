@@ -23,8 +23,8 @@ class AskRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'question'=>['required', 'string', 'max:1000'],
-            'top_k'=>['nullable', 'integer', 'min:1', 'max:10']
+            'question' => ['required', 'string', 'max:1000'],
+            'top_k' => ['nullable', 'integer', 'min:1', 'max:10'],
         ];
     }
 }

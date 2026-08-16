@@ -37,7 +37,7 @@ class DocumentResource extends Resource
     {
         return [
             ChunksRelationManager::class,
-            
+
         ];
     }
 

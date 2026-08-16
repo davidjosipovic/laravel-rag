@@ -2,10 +2,7 @@
 
 namespace App\Filament\Resources\Documents\Schemas;
 
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Schema;
 
 class DocumentForm
@@ -18,7 +15,7 @@ class DocumentForm
                     ->label('Document file')
                     ->collection('documents')
                     ->required()
-                    ->maxSize(204800)
+                    ->maxSize(204800),
             ]);
     }
 }

@@ -2,10 +2,7 @@
 
 namespace App\Filament\Resources\Chunks;
 
-use App\Filament\Resources\Chunks\Pages\CreateChunk;
-use App\Filament\Resources\Chunks\Pages\EditChunk;
 use App\Filament\Resources\Chunks\Pages\ListChunks;
-use App\Filament\Resources\Chunks\Schemas\ChunkForm;
 use App\Filament\Resources\Chunks\Schemas\ChunkInfolist;
 use App\Filament\Resources\Chunks\Tables\ChunksTable;
 use App\Models\Chunk;
@@ -23,16 +20,15 @@ class ChunkResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'chunk_index';
 
-
     public static function table(Table $table): Table
     {
         return ChunksTable::configure($table);
     }
 
     public static function infolist(Schema $schema): Schema
-{
-    return ChunkInfolist::configure($schema);
-}
+    {
+        return ChunkInfolist::configure($schema);
+    }
 
     public static function getRelations(): array
     {
@@ -44,7 +40,7 @@ class ChunkResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListChunks::route('/')
+            'index' => ListChunks::route('/'),
         ];
     }
 
