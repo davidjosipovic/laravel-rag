@@ -10,6 +10,11 @@ class TextChunker
     public function chunk(string $text, int $chunkSize = 1000, int $overlap = 200): \Generator
     {
         $paragraphs = preg_split("/\n\s*\n/", $text);
+
+        if ($paragraphs === false) {
+            return;
+        }
+
         $buffer = '';
 
         foreach ($paragraphs as $paragraph) {

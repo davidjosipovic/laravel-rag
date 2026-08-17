@@ -7,9 +7,9 @@ use Paperdoc\Facades\Paperdoc;
 class ExtractPdfData
 {
     /**
-     * Split text into overlapping chunks.
+     * @return array{source_path: string, content: string, metadata: array<string, mixed>, mime_type: string}
      */
-    public function handle($path): array
+    public function handle(string $path): array
     {
 
         $document = Paperdoc::open($path);

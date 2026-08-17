@@ -2,6 +2,7 @@
 
 namespace App\Ai\Agents;
 
+use App\Models\Chunk;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Collection;
 use Laravel\Ai\Contracts\Agent;
@@ -16,6 +17,9 @@ class Rag implements Agent, Conversational, HasStructuredOutput, HasTools
 {
     use Promptable;
 
+    /**
+     * @param  Collection<int, Chunk>  $chunks
+     */
     public function __construct(protected Collection $chunks) {}
 
     public function instructions(): string

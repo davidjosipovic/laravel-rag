@@ -12,9 +12,8 @@ class QueryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function ask(AskRequest $request)
+    public function ask(AskRequest $request): AnswerResource
     {
-        //
         $question = $request->validated('question');
         $top_k = $request->validated('top_k');
         $result = AnswerQuestion::handle($question, $top_k);
