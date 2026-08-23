@@ -16,7 +16,8 @@ class AnswerQuestion
         $chunks = Chunk::whereVectorSimilarTo('embedding', $question)
             ->limit($top_k)
             ->with('document')
-            ->get();
+            ->get()
+            ->rerank('content',$question);
 
         $agent = new Rag($chunks);
 

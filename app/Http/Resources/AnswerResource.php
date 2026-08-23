@@ -33,3 +33,4 @@ class AnswerResource extends JsonResource
         ];
     }
 }
+
