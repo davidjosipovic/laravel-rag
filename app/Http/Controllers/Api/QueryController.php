@@ -12,7 +12,7 @@ class QueryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function ask(AskRequest $request): AnswerResource
+    public function __invoke(AskRequest $request): AnswerResource
     {
         $question = $request->validated('question');
         $top_k = $request->validated('top_k');

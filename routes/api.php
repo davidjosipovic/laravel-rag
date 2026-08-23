@@ -11,7 +11,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::middleware(['throttle:api', 'auth:sanctum'])->group(function () {
-    Route::post('/ask', [QueryController::class, 'ask']);
+    Route::post('/ask', QueryController::class);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user/{user}', fn(User $user) => $user);
     Route::get('/user', fn(User $user) => $user->all());
