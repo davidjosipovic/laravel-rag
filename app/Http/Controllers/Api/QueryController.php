@@ -15,8 +15,7 @@ class QueryController extends Controller
     public function __invoke(AskRequest $request): AnswerResource
     {
         $question = $request->validated('question');
-        $top_k = $request->validated('top_k');
-        $result = AnswerQuestion::handle($question, $top_k);
+        $result = AnswerQuestion::handle($question);
 
         return new AnswerResource($result);
     }

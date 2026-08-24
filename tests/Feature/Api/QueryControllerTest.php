@@ -5,6 +5,7 @@ use App\Models\Chunk;
 use App\Models\Document;
 use App\Models\User;
 use Laravel\Ai\Embeddings;
+use Laravel\Ai\Responses\Data\ToolCall;
 use Laravel\Sanctum\Sanctum;
 
 test('guests cannot ask a question', function () {
@@ -28,13 +29,15 @@ test('authenticated users can ask a question and receive an answer with sources'
     $vector = array_fill(0, 1536, 0.1);
 
     Embeddings::fake(fn ($prompt) => array_map(fn () => $vector, $prompt->inputs));
-    Rag::fake([
-        ['value' => 'Laravel is a PHP web framework.'],
-    ]);
 
     $chunk = Chunk::factory()
         ->for(Document::factory()->create(['title' => 'Laravel Docs']))
         ->create(['embedding' => $vector]);
+
+    Rag::fake([
+        new ToolCall(id: 'call_1', name: 'SimilaritySearch', arguments: ['query' => 'What is Laravel?']),
+        ['value' => 'Laravel is a PHP web framework.'],
+    ]);
 
     $response = $this->postJson('/api/ask', [
         'question' => 'What is Laravel?',

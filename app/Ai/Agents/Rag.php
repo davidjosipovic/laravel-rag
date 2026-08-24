@@ -4,7 +4,8 @@ namespace App\Ai\Agents;
 
 use App\Models\Chunk;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Collection;
+use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
 use Laravel\Ai\Contracts\HasStructuredOutput;
@@ -12,21 +13,27 @@ use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Messages\Message;
 use Laravel\Ai\Promptable;
+use Laravel\Ai\Tools\SimilaritySearch;
 
+#[MaxSteps(5)]
 class Rag implements Agent, Conversational, HasStructuredOutput, HasTools
 {
     use Promptable;
 
     /**
-     * @param  Collection<int, Chunk>  $chunks
+     * @var Collection<int, Chunk>
      */
-    public function __construct(protected Collection $chunks) {}
+    public Collection $retrievedChunks;
+
+    public function __construct()
+    {
+        $this->retrievedChunks = new Collection;
+    }
 
     public function instructions(): string
     {
-        $context = $this->chunks->pluck('content')->implode("\n\n---\n\n");
 
-        return "Answer only using the following context. If the answer isn't in it, say you don't know.\n\nContext:\n{$context}";
+        return 'Medicinski asistent. Koristi SimilaritySearch za medicinske činjenice. Ne daj osobne savjete. Uvijek preporuči liječnika i dodaj disclaimer. Hitno: pozovite 194.';
     }
 
     /**
@@ -46,7 +53,18 @@ class Rag implements Agent, Conversational, HasStructuredOutput, HasTools
      */
     public function tools(): iterable
     {
-        return [];
+        return [
+            (new SimilaritySearch(using: function (string $query) {
+                $chunks = Chunk::query()
+                    ->whereVectorSimilarTo('embedding', $query, minSimilarity: 0.6)
+                    ->limit(15)
+                    ->get();
+
+                $this->retrievedChunks = $this->retrievedChunks->merge($chunks);
+
+                return $chunks;
+            }))->withDescription('KRITIČNO: SimilaritySearch smiješ pozvati SAMO JEDNOM po upitu. Pretraži zdravstvenu bazu znanja. Koristi za pitanja o bolestima, lijekovima, simptomima, nuspojavama i liječenju. Ne koristi za osobne medicinske savjete, dijagnoze ili teme izvan medicine. Uvijek dodaj medicinski disclaimer i preporuči liječnika.'),
+        ];
     }
 
     /**
