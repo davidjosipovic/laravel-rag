@@ -17,7 +17,7 @@ class AnswerQuestion
     {
         $agent = new Rag;
 
-        if ($conversationId){
+        if ($user->conversations()->where('id',$conversationId)->exists()){
         /** @var StructuredAgentResponse $response */
         $response = $agent->continue($conversationId,as:$user)->prompt($question);
         }
