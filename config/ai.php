@@ -119,7 +119,7 @@ return [
             'url' => env('GEMINI_URL', 'https://generativelanguage.googleapis.com/v1beta/'),
             'models' => [
                 'text' => [
-                    'default' => 'gemini-3.6-flash',
+                    'default' => 'gemini-3.5-flash-lite',
                 ],
                 'embeddings' => [
                     'default' => 'gemini-embedding-2',

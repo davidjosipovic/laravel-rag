@@ -6,6 +6,7 @@ use App\Models\Chunk;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Database\Eloquent\Collection;
 use Laravel\Ai\Attributes\MaxSteps;
+use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
 use Laravel\Ai\Contracts\HasStructuredOutput;
@@ -18,7 +19,7 @@ use Laravel\Ai\Tools\SimilaritySearch;
 #[MaxSteps(5)]
 class Rag implements Agent, Conversational, HasStructuredOutput, HasTools
 {
-    use Promptable;
+    use Promptable, RemembersConversations;
 
     /**
      * @var Collection<int, Chunk>
@@ -34,16 +35,6 @@ class Rag implements Agent, Conversational, HasStructuredOutput, HasTools
     {
 
         return 'Medicinski asistent. Koristi SimilaritySearch za medicinske činjenice. Ne daj osobne savjete. Uvijek preporuči liječnika i dodaj disclaimer. Hitno: pozovite 194.';
-    }
-
-    /**
-     * Get the list of messages comprising the conversation so far.
-     *
-     * @return Message[]
-     */
-    public function messages(): iterable
-    {
-        return [];
     }
 
     /**

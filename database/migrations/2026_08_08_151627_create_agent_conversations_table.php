@@ -15,7 +15,7 @@ return new class extends AiMigration
         $messagesTable = config('ai.conversations.tables.messages', 'agent_conversation_messages');
 
         Schema::create($conversationsTable, function (Blueprint $table) {
-            $table->string('id', 36)->primary();
+            $table->string('id', 36)->primary();  // <-- UUID je string
             $table->string('participant_type')->nullable();
             $table->unsignedBigInteger('participant_id')->nullable();
             $table->string('title');
@@ -24,9 +24,16 @@ return new class extends AiMigration
             $table->index(['participant_type', 'participant_id', 'updated_at'], 'participant_updated_at_index');
         });
 
-        Schema::create($messagesTable, function (Blueprint $table) {
+        Schema::create($messagesTable, function (Blueprint $table) use ($conversationsTable) {
             $table->string('id', 36)->primary();
-            $table->string('conversation_id', 36)->index();
+            
+            // ⚠️ VAŽNO: conversation_id mora biti string, ne bigint!
+            $table->string('conversation_id', 36)  // <-- PROMIJENI U STRING!
+                ->index()
+                ->references('id')
+                ->on($conversationsTable)
+                ->cascadeOnDelete();
+            
             $table->string('participant_type')->nullable();
             $table->unsignedBigInteger('participant_id')->nullable();
             $table->string('agent');
@@ -50,7 +57,10 @@ return new class extends AiMigration
      */
     public function down(): void
     {
-        Schema::dropIfExists(config('ai.conversations.tables.messages', 'agent_conversation_messages'));
-        Schema::dropIfExists(config('ai.conversations.tables.conversations', 'agent_conversations'));
+        $messagesTable = config('ai.conversations.tables.messages', 'agent_conversation_messages');
+        $conversationsTable = config('ai.conversations.tables.conversations', 'agent_conversations');
+        
+        Schema::dropIfExists($messagesTable);
+        Schema::dropIfExists($conversationsTable);
     }
 };

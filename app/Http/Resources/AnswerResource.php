@@ -24,6 +24,7 @@ class AnswerResource extends JsonResource
 
         return [
             'answer' => $this->resource['answer'],
+            'conversation_id' => $this->resource['conversation_id'],
             'sources' => $this->resource['chunks']->map(fn (Chunk $chunk) => [
                 'document_id' => $chunk->document_id,
                 'document_title' => $chunk->document->title,
