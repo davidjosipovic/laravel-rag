@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Actions\AnswerQuestion;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ChatRequest;
 use App\Http\Resources\AnswerResource;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -13,10 +14,12 @@ use Laravel\Ai\Models\ConversationMessage;
 
 class ChatController extends Controller
 {
-    public function chat(Request $request): AnswerResource
+    public function chat(ChatRequest $request): AnswerResource
     {
-        $question = $request->input('question');
-        $conversationId = $request->input('conversation_id') ?: null;
+        $validated = $request->validated();
+
+        $question = $validated['question'];
+        $conversationId = $validated['conversation_id'] ?? null;
         $result = AnswerQuestion::handle($question, $request->user(), $conversationId);
 
         return new AnswerResource($result);
@@ -37,14 +40,14 @@ class ChatController extends Controller
         return $response;
     }
 
-    public function delete(Request $request, string $conversationId): JsonResponse
+    public function delete(Request $request, Conversation $conversation): JsonResponse
     {
-        $deleted = Conversation::destroy($conversationId);
-        if ($deleted === 1) {
-            return response()->json('Chat deleted', 200);
-        } else {
-            return response()->json('Chat not found', 404);
-
+        if ($request->user()->id !== $conversation['participant_id']) {
+            return response()->json('Not authorized');
         }
+        $conversation->delete();
+
+        return response()->json('Deleted', 200);
+
     }
 }
