@@ -13,9 +13,6 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Laravel\Ai\Concerns\HasConversations;
-use Laravel\Fortify\Contracts\PasskeyUser;
-use Laravel\Fortify\PasskeyAuthenticatable;
-use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
@@ -34,10 +31,10 @@ use Laravel\Sanctum\HasApiTokens;
 #[Fillable(['name', 'email', 'password', 'is_admin'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 #[RouteKey('name')]
-class User extends Authenticatable implements PasskeyUser
+class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable, HasConversations;
+    use HasApiTokens, HasConversations, HasFactory, Notifiable;
 
     /**
      * Get the attributes that should be cast.

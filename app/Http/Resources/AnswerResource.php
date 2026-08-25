@@ -10,7 +10,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class AnswerResource extends JsonResource
 {
     /**
-     * @var array{answer: string, chunks: Collection<int, Chunk>, tokens_used: int}
+     * @var array{answer: string, conversation_id: string, chunks: Collection<int, Chunk>, tokens_used: int}
      */
     public $resource;
 
@@ -23,15 +23,14 @@ class AnswerResource extends JsonResource
     {
 
         return [
-            'answer' => $this->resource['answer'],
-            'conversation_id' => $this->resource['conversation_id'],
-            'sources' => $this->resource['chunks']->map(fn (Chunk $chunk) => [
+            'answer' => $this['answer'],
+            'conversation_id' => $this['conversation_id'],
+            'sources' => $this['chunks']->map(fn (Chunk $chunk) => [
                 'document_id' => $chunk->document_id,
                 'document_title' => $chunk->document->title,
                 'excerpt' => str($chunk->content)->limit(200)->toString(),
             ])->all(),
-            'tokens_used' => $this->resource['tokens_used'],
+            'tokens_used' => $this['tokens_used'],
         ];
     }
 }
-

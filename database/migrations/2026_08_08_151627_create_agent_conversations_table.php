@@ -26,14 +26,14 @@ return new class extends AiMigration
 
         Schema::create($messagesTable, function (Blueprint $table) use ($conversationsTable) {
             $table->string('id', 36)->primary();
-            
-            // ⚠️ VAŽNO: conversation_id mora biti string, ne bigint!
-            $table->string('conversation_id', 36)  // <-- PROMIJENI U STRING!
-                ->index()
+
+            $table->string('conversation_id', 36);
+
+            $table->foreign('conversation_id')
                 ->references('id')
                 ->on($conversationsTable)
                 ->cascadeOnDelete();
-            
+
             $table->string('participant_type')->nullable();
             $table->unsignedBigInteger('participant_id')->nullable();
             $table->string('agent');
@@ -59,7 +59,7 @@ return new class extends AiMigration
     {
         $messagesTable = config('ai.conversations.tables.messages', 'agent_conversation_messages');
         $conversationsTable = config('ai.conversations.tables.conversations', 'agent_conversations');
-        
+
         Schema::dropIfExists($messagesTable);
         Schema::dropIfExists($conversationsTable);
     }
