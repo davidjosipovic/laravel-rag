@@ -22,7 +22,6 @@ class ListDocuments extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
 
             Action::make('bulkUpload')
                 ->label('Bulk upload')
