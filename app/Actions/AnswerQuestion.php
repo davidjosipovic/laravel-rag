@@ -10,19 +10,20 @@ use Laravel\Ai\Responses\StructuredAgentResponse;
 
 class AnswerQuestion
 {
+    public function __construct(private Rag $agent) {}
+
     /**
      * @return array{answer: string, conversation_id: string, chunks: Collection<int, Chunk>, tokens_used: int}
      */
-    public static function handle(string $question, User $user, ?string $conversationId = null): array
+    public function handle(string $question, User $user, ?string $conversationId = null): array
     {
-        $agent = new Rag;
 
         if ($user->conversations()->where('id', $conversationId)->exists()) {
             /** @var StructuredAgentResponse $response */
-            $response = $agent->continue($conversationId, as: $user)->prompt($question);
+            $response = $this->agent->continue($conversationId, as: $user)->prompt($question);
         } else {
             /** @var StructuredAgentResponse $response */
-            $response = $agent->forUser($user)->prompt($question);
+            $response = $this->agent->forUser($user)->prompt($question);
         }
 
         $usage = $response->usage;
@@ -30,7 +31,7 @@ class AnswerQuestion
         return [
             'answer' => (string) $response['value'],
             'conversation_id' => $response->conversationId,
-            'chunks' => $agent->retrievedChunks->unique('id')->values(),
+            'chunks' => $this->agent->retrievedChunks->unique('id')->values(),
             'tokens_used' => $usage->promptTokens + $usage->completionTokens,
         ];
     }

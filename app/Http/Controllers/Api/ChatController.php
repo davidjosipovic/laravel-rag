@@ -14,13 +14,13 @@ use Laravel\Ai\Models\ConversationMessage;
 
 class ChatController extends Controller
 {
-    public function chat(ChatRequest $request): AnswerResource
+    public function chat(ChatRequest $request, AnswerQuestion $answerQuestion): AnswerResource
     {
         $validated = $request->validated();
 
         $question = $validated['question'];
         $conversationId = $validated['conversation_id'] ?? null;
-        $result = AnswerQuestion::handle($question, $request->user(), $conversationId);
+        $result = $answerQuestion->handle($question, $request->user(), $conversationId);
 
         return new AnswerResource($result);
 

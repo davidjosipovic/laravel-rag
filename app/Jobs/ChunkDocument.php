@@ -23,12 +23,12 @@ class ChunkDocument implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(TextChunker $chunker): void
     {
         $document = Document::findOrFail($this->documentId);
         $document->update(['status' => 'chunking']);
 
-        $chunks = (new TextChunker)->chunk($document->content);
+        $chunks = $chunker->chunk($document->content);
 
         foreach ($chunks as $index => $text) {
             Chunk::create([

@@ -28,7 +28,7 @@ class EmbedChunks implements ShouldQueue
     public function handle(): void
     {
         $document = Document::findOrFail($this->documentId);
-        $document->update(['status' => 'embedding ']);
+        $document->update(['status' => 'embedding']);
 
         Chunk::whereNull('embedding')
             ->where('document_id', $this->documentId)

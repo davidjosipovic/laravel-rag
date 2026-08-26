@@ -8,7 +8,6 @@ use App\Jobs\EmbedChunks;
 use App\Jobs\ProcessDocument;
 use App\Models\Document;
 use Filament\Actions\Action;
-use Filament\Actions\CreateAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
