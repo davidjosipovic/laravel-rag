@@ -6,8 +6,13 @@ use App\Models\Chunk;
 
 class SimilaritySearch
 {
-    public function handle(string $query, int $limit)
+    /**
+     * Summary of handle
+     *
+     * @return int[]
+     */
+    public function handle(string $query, int $limit): array
     {
-        return Chunk::whereVectorSimilarTo('embedding',$query, minSimilarity:0.5)->limit($limit)->pluck('id')->all();
+        return Chunk::whereVectorSimilarTo('embedding', $query, minSimilarity: 0.5)->limit($limit)->pluck('id')->all();
     }
 }

@@ -13,7 +13,11 @@ use Stringable;
 
 class SearchKnowledgeBase implements Tool
 {
-
+    /**
+     * Summary of retrievedChunks
+     *
+     * @var Collection<int,Chunk>
+     */
     public Collection $retrievedChunks;
 
     public function __construct(private FullTextSearch $fullTextSearch, private SimilaritySearch $similaritySearch)
@@ -26,8 +30,8 @@ class SearchKnowledgeBase implements Tool
      */
     public function description(): Stringable|string
     {
-        return 'Pretraži bazu znanja o onkološkim lijekovima i terapijama. ' .
-            'Koristi za sva pitanja o lijekovima, nuspojavama, dozama i primjeni. ' .
+        return 'Pretraži bazu znanja o onkološkim lijekovima i terapijama. '.
+            'Koristi za sva pitanja o lijekovima, nuspojavama, dozama i primjeni. '.
             'Upiši pitanje ili pojam prirodnim jezikom.';
     }
 
@@ -36,25 +40,25 @@ class SearchKnowledgeBase implements Tool
      */
     public function handle(Request $request): Stringable|string
     {
-        $query=trim((string) $request['query']);
+        $query = trim((string) $request['query']);
 
         $ids = $this->fuse([
             $this->fullTextSearch->handle($query, 50),
-            $this->similaritySearch->handle($query, 50)
+            $this->similaritySearch->handle($query, 50),
         ]);
 
         if (empty($ids)) {
             return 'Nema rezultata u bazi znanja za taj upit.';
         }
 
-        $chunks = Chunk::whereIn('id', $ids)
+        $chunks = Chunk::with('document:id,title')->whereIn('id', $ids)
             ->get()
             ->rerank(by: 'content', query: $query, limit: 8);
 
         $this->retrievedChunks = $chunks;
 
         return $chunks
-            ->map(fn($c) => "[chunk {$c->id}]\n{$c->content}")
+            ->map(fn ($c) => "[chunk {$c->id}]\n{$c->content}")
             ->implode("\n\n");
     }
 

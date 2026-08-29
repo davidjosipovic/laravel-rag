@@ -6,8 +6,13 @@ use App\Models\Chunk;
 
 class FullTextSearch
 {
-    public function handle(string $query, int $limit)
+    /**
+     * Summary of handle
+     *
+     * @return int[]
+     */
+    public function handle(string $query, int $limit): array
     {
-        return Chunk::whereFullText('content',$query)->limit($limit)->pluck('id')->all();
+        return Chunk::whereFullText('content', $query)->limit($limit)->pluck('id')->all();
     }
 }

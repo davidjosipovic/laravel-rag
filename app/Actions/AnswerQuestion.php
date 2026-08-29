@@ -5,7 +5,7 @@ namespace App\Actions;
 use App\Ai\Agents\Rag;
 use App\Models\Chunk;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
 use Laravel\Ai\Responses\StructuredAgentResponse;
 
 class AnswerQuestion
@@ -13,7 +13,7 @@ class AnswerQuestion
     public function __construct(private Rag $agent) {}
 
     /**
-     * @return array{answer: string, conversation_id: string, chunks: Collection<int, Chunk>, tokens_used: int}
+     * @return array{answer: string, conversation_id: ?string, chunks: Collection<int, Chunk>, tokens_used: int}
      */
     public function handle(string $question, User $user, ?string $conversationId = null): array
     {
