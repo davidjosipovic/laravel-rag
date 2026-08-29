@@ -20,6 +20,8 @@ return new class extends Migration
             $table->text('content');
             $table->vector('embedding', dimensions: 1536)->index()->nullable();
             $table->timestamps();
+
+            $table->fullText(['content'])->language('simple');
         });
     }
 

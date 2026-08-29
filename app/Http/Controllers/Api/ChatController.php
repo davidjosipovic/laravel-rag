@@ -9,6 +9,7 @@ use App\Http\Resources\AnswerResource;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Laravel\Ai\Models\Conversation;
 use Laravel\Ai\Models\ConversationMessage;
 
@@ -29,6 +30,7 @@ class ChatController extends Controller
     /** @return Collection<int, Conversation> */
     public function list(Request $request): Collection
     {
+        Log::info("hello bro");
         return $request->user()->conversations()->get();
     }
 

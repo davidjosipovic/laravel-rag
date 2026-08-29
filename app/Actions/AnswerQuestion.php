@@ -31,7 +31,7 @@ class AnswerQuestion
         return [
             'answer' => (string) $response['value'],
             'conversation_id' => $response->conversationId,
-            'chunks' => $this->agent->retrievedChunks->unique('id')->values(),
+            'chunks' => $this->agent->retrievedChunks()->unique('id')->values(),
             'tokens_used' => $usage->promptTokens + $usage->completionTokens,
         ];
     }
