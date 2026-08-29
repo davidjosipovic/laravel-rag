@@ -18,7 +18,7 @@ use Livewire\Livewire;
 use function Pest\Laravel\assertDatabaseMissing;
 
 beforeEach(function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(User::factory()->admin()->create());
 });
 
 test('document list page can be rendered and shows records', function () {
