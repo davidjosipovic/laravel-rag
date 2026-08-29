@@ -19,7 +19,6 @@ class EmbedChunks implements ShouldQueue
 
     public function __construct(public int $documentId)
     {
-        //
     }
 
     /**

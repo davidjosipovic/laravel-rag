@@ -49,6 +49,10 @@ class User extends Authenticatable
         ];
     }
 
+    public function isAdmin():bool{
+        return $this->is_admin===true;
+    }
+
     /**
      * Get the user's initials
      */
