@@ -1,6 +1,5 @@
 <?php
 
-use App\Filament\Resources\Documents\Pages\CreateDocument;
 use App\Filament\Resources\Documents\Pages\EditDocument;
 use App\Filament\Resources\Documents\Pages\ListDocuments;
 use App\Jobs\ChunkDocument;
@@ -28,8 +27,6 @@ test('document list page can be rendered and shows records', function () {
         ->assertOk()
         ->assertCanSeeTableRecords($documents);
 });
-
-
 
 test('bulk uploading files creates a document per file and queues processing', function () {
     Bus::fake();

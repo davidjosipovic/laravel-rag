@@ -15,7 +15,7 @@ return new class extends AiMigration
         $messagesTable = config('ai.conversations.tables.messages', 'agent_conversation_messages');
 
         Schema::create($conversationsTable, function (Blueprint $table) {
-            $table->string('id', 36)->primary();  // <-- UUID je string
+            $table->string('id', 36)->primary();
             $table->string('participant_type')->nullable();
             $table->unsignedBigInteger('participant_id')->nullable();
             $table->string('title');
