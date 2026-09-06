@@ -16,7 +16,9 @@ class EmbedChunks implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public int $tries = 1;
+    public int $tries = 2;
+    //public int $timeout = 3600;
+    //public int $maxExceptions = 3;
 
     public function __construct(public int $documentId) {}
 

@@ -30,8 +30,6 @@ class ChatController extends Controller
     /** @return Collection<int, Conversation> */
     public function list(Request $request): Collection
     {
-        Log::info('hello bro');
-
         return $request->user()->conversations()->get();
     }
 

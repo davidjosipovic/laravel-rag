@@ -11,7 +11,7 @@ class DocumentForm
     {
         return $schema
             ->components([
-                SpatieMediaLibraryFileUpload::make('source_path')
+                SpatieMediaLibraryFileUpload::make('file')
                     ->label('Document file')
                     ->collection('documents')
                     ->required()

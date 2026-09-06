@@ -2,7 +2,8 @@
 
 namespace App\Actions;
 
-class TextChunker
+class 
+TextChunker
 {
     /**
      * Split text into overlapping chunks.

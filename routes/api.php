@@ -11,7 +11,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::middleware(['throttle:api', 'auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user/{user}', fn (User $user) => $user);
-    Route::get('/user', fn (User $user) => $user->all());
+    Route::get('/user', fn() => User::all());
 
     Route::prefix('chat')->group(function () {
         Route::post('/', [ChatController::class, 'chat']);

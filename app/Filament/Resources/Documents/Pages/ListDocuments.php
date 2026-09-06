@@ -39,6 +39,8 @@ class ListDocuments extends ListRecords
                     foreach ($files as $file) {
                         $document = Document::create([
                             'title' => $file->getClientOriginalName(),
+                            'mime_type' => $file->getMimeType(),
+
                         ]);
 
                         $document->addMedia($file)
