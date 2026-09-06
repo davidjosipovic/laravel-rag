@@ -17,8 +17,8 @@ class EmbedChunks implements ShouldQueue
      * Create a new job instance.
      */
     public int $tries = 2;
-    //public int $timeout = 3600;
-    //public int $maxExceptions = 3;
+    // public int $timeout = 3600;
+    // public int $maxExceptions = 3;
 
     public function __construct(public int $documentId) {}
 
@@ -29,7 +29,7 @@ class EmbedChunks implements ShouldQueue
     {
         $document = Document::findOrFail($this->documentId);
         $document->update(['status' => 'embedding']);
-        $processed=0;
+        $processed = 0;
 
         Chunk::whereNull('embedding')
             ->where('document_id', $this->documentId)
@@ -40,11 +40,11 @@ class EmbedChunks implements ShouldQueue
                     foreach ($chunks as $i => $chunk) {
                         $chunk->update(['embedding' => $vectors[$i]]);
                     }
-                    $processed+=$chunks->count();
+                    $processed += $chunks->count();
 
                 }
             );
-        if ($processed===0){
+        if ($processed === 0) {
             throw new RuntimeException("No chunks to embed for document {$this->documentId}.");
         }
         $document->update(['status' => 'done']);

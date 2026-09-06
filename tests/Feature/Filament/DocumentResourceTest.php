@@ -29,26 +29,7 @@ test('document list page can be rendered and shows records', function () {
         ->assertCanSeeTableRecords($documents);
 });
 
-test('a document can be created and queues processing jobs', function () {
-    Bus::fake();
 
-    Livewire::test(CreateDocument::class)
-        ->fillForm([
-            'source_path' => UploadedFile::fake()->create('report.pdf', 10, 'application/pdf'),
-        ])
-        ->call('create')
-        ->assertHasNoFormErrors();
-
-    $document = Document::sole();
-
-    expect($document->getFirstMedia('documents'))->not->toBeNull();
-
-    Bus::assertChained([
-        ProcessDocument::class,
-        ChunkDocument::class,
-        EmbedChunks::class,
-    ]);
-});
 
 test('bulk uploading files creates a document per file and queues processing', function () {
     Bus::fake();

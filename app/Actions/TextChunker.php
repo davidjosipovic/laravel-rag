@@ -2,8 +2,7 @@
 
 namespace App\Actions;
 
-class 
-TextChunker
+class TextChunker
 {
     /**
      * Split text into overlapping chunks.
@@ -16,7 +15,6 @@ TextChunker
             return;
         }
 
-
         $buffer = '';
 
         foreach ($paragraphs as $paragraph) {
@@ -28,9 +26,9 @@ TextChunker
 
             if ($buffer !== '' && mb_strlen($buffer) + mb_strlen($paragraph) > $chunkSize) {
                 yield $buffer;
-                $buffer = mb_substr($buffer, -$overlap) . "\n\n" . $paragraph;  // small string
+                $buffer = mb_substr($buffer, -$overlap)."\n\n".$paragraph;  // small string
             } else {
-                $buffer = $buffer === '' ? $paragraph : $buffer . "\n\n" . $paragraph;
+                $buffer = $buffer === '' ? $paragraph : $buffer."\n\n".$paragraph;
             }
         }
 
