@@ -2,26 +2,29 @@
 
 namespace App\Actions;
 
-use Paperdoc\Facades\Paperdoc;
+use App\Services\DoclingService;
 
 class ExtractPdfData
 {
+    public function __construct(
+        private DoclingService $docling,
+    ) {}
+
     /**
      * @return array{source_path: string, content: string, metadata: array<string, mixed>}
      */
     public function handle(string $path): array
     {
-
-        $document = Paperdoc::open($path);
-        $content = Paperdoc::renderAs($document, 'md');
-
-        $metadata = $document->getMetadata();
+        $result = $this->docling->convert($path);
 
         return [
             'source_path' => $path,
-            'content' => $content,
-            'metadata' => $metadata,
+            'content' => $result['document']['md_content'] ?? '',
+            'metadata' => [
+                'filename' => $result['document']['filename'] ?? basename($path),
+                'status' => $result['status'] ?? null,
+                'processing_time' => $result['processing_time'] ?? null,
+            ],
         ];
-
     }
 }

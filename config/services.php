@@ -35,4 +35,7 @@ return [
         ],
     ],
 
+    'docling' => [
+        'url' => env('DOCLING_URL', 'http://docling:5001'),
+    ]
 ];

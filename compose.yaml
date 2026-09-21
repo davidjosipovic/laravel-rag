@@ -19,7 +19,6 @@ services:
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
         volumes:
             - '.:/var/www/html'
-            - 'sail-vendor:/var/www/html/vendor'
         networks:
             - sail
         depends_on:
@@ -49,11 +48,17 @@ services:
                 - '${DB_USERNAME}'
             retries: 3
             timeout: 5s
+    docling:
+        image: 'quay.io/docling-project/docling-serve'
+        ports:
+            - '5001:5001'
+        environment:
+            DOCLING_SERVE_ENABLE_UI: 1
+        networks:
+            - sail
 networks:
     sail:
         driver: bridge
 volumes:
     sail-pgsql:
-        driver: local
-    sail-vendor:
         driver: local
