@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Actions\TextChunker;
+use App\Enums\DocumentStatus;
 use App\Models\Chunk;
 use App\Models\Document;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -27,7 +28,7 @@ class ChunkDocument implements ShouldQueue
     {
         $document = Document::findOrFail($this->documentId);
         Chunk::where('document_id', $this->documentId)->delete();
-        $document->update(['status' => 'chunking']);
+        $document->update(['status' => DocumentStatus::Chunking]);
 
         $chunks = $chunker->chunk($document->content);
 
@@ -38,6 +39,6 @@ class ChunkDocument implements ShouldQueue
                 'content' => $text,
             ]);
         }
-
+        $document->update(['status' => DocumentStatus::Chunked]);
     }
 }

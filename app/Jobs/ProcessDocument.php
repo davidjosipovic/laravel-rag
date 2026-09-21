@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Actions\ExtractPdfData;
+use App\Enums\DocumentStatus;
 use App\Models\Document;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -27,8 +28,8 @@ class ProcessDocument implements ShouldQueue
     public function handle(ExtractPdfData $extractor): void
     {
         $document = Document::findOrFail($this->documentId);
-        $document->update(['status' => 'processing']);
         $path = $document->getFirstMedia('documents')->getPath();
-        $document->update($extractor->handle($path));
+        $data = $extractor->handle($path);
+        $document->update([...$data, 'status' => DocumentStatus::Extracted]);
     }
 }

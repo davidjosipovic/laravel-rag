@@ -2,16 +2,13 @@
 
 namespace App\Filament\Resources\Documents\Pages;
 
+use App\Enums\DocumentStatus;
 use App\Filament\Resources\Documents\DocumentResource;
-use App\Jobs\ChunkDocument;
-use App\Jobs\EmbedChunks;
-use App\Jobs\ProcessDocument;
 use App\Models\Document;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
-use Illuminate\Support\Facades\Bus;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class ListDocuments extends ListRecords
@@ -46,12 +43,8 @@ class ListDocuments extends ListRecords
                         $document->addMedia($file)
                             ->usingFileName($file->getClientOriginalName())
                             ->toMediaCollection('documents');
+                        $document->update(['status' => DocumentStatus::Uploaded]);
 
-                        Bus::chain([
-                            new ProcessDocument($document->id),
-                            new ChunkDocument($document->id),
-                            new EmbedChunks($document->id),
-                        ])->dispatch();
                     }
 
                     Notification::make()

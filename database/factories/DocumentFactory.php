@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\DocumentStatus;
 use App\Models\Document;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,7 +22,7 @@ class DocumentFactory extends Factory
             'title' => fake()->sentence(4),
             'content' => fake()->paragraphs(3, true),
             'mime_type' => 'text/plain',
-            'status' => 'completed',
+            'status' => DocumentStatus::Embedded,
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\DocumentStatus;
 use App\Models\Chunk;
 use App\Models\Document;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,7 +29,7 @@ class EmbedChunks implements ShouldQueue
     public function handle(): void
     {
         $document = Document::findOrFail($this->documentId);
-        $document->update(['status' => 'embedding']);
+        $document->update(['status' => DocumentStatus::Embedding]);
         $processed = 0;
 
         Chunk::whereNull('embedding')
@@ -47,7 +48,6 @@ class EmbedChunks implements ShouldQueue
         if ($processed === 0) {
             throw new RuntimeException("No chunks to embed for document {$this->documentId}.");
         }
-        $document->update(['status' => 'done']);
-
+        $document->update(['status' => DocumentStatus::Embedded]);
     }
 }

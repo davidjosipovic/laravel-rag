@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\DocumentStatus;
 use App\Filament\Resources\Documents\Pages\EditDocument;
 use App\Filament\Resources\Documents\Pages\ListDocuments;
 use App\Jobs\ChunkDocument;
@@ -41,13 +42,11 @@ test('bulk uploading files creates a document per file and queues processing', f
         ->assertNotified();
 
     expect(Document::count())->toBe(2);
+    expect(Document::query()->pluck('status')->unique()->all())->toBe([DocumentStatus::Uploaded]);
 
     Bus::assertDispatchedTimes(ProcessDocument::class, 2);
-    Bus::assertChained([
-        ProcessDocument::class,
-        ChunkDocument::class,
-        EmbedChunks::class,
-    ]);
+    Bus::assertNotDispatched(ChunkDocument::class);
+    Bus::assertNotDispatched(EmbedChunks::class);
 });
 
 test('a document can be deleted from the edit page', function () {
