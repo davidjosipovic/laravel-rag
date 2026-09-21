@@ -13,6 +13,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 use function Pest\Laravel\assertDatabaseMissing;
@@ -31,6 +32,7 @@ test('document list page can be rendered and shows records', function () {
 
 test('bulk uploading files creates a document per file and queues processing', function () {
     Bus::fake();
+    Storage::fake('public');
 
     Livewire::test(ListDocuments::class)
         ->callAction('bulkUpload', data: [
