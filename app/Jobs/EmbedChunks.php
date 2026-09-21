@@ -34,7 +34,7 @@ class EmbedChunks implements ShouldQueue
         Chunk::whereNull('embedding')
             ->where('document_id', $this->documentId)
             ->chunkById(
-                100,
+                10,
                 function ($chunks) use (&$processed) {
                     $vectors = Embeddings::for($chunks->pluck('content')->all())->generate()->embeddings;
                     foreach ($chunks as $i => $chunk) {
