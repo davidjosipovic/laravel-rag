@@ -5,35 +5,30 @@ namespace App\Actions;
 class TextChunker
 {
     /**
-     * Split text into overlapping chunks.
+     * Split text into overlapping chunks of N words.
      */
-    public function chunk(string $text, int $chunkSize = 1000, int $overlap = 200): \Generator
+    public function chunk(string $text, int $chunkSize = 200, int $overlap = 40): \Generator
     {
-        $paragraphs = preg_split("/\n\s*\n/", $text);
+        if ($overlap >= $chunkSize) {
+            throw new \InvalidArgumentException('Overlap must be smaller than chunk size.');
+        }
 
-        if ($paragraphs === false) {
+        preg_match_all('/\S+\s*/u', $text, $matches);
+        $words = $matches[0];
+        $total = count($words);
+
+        if ($total === 0) {
             return;
         }
 
-        $buffer = '';
+        $step = $chunkSize - $overlap;
 
-        foreach ($paragraphs as $paragraph) {
-            $paragraph = trim($paragraph);
+        for ($start = 0; $start < $total; $start += $step) {
+            yield trim(implode('', array_slice($words, $start, $chunkSize)));
 
-            if ($paragraph === '') {
-                continue;
+            if ($start + $chunkSize >= $total) {
+                break;
             }
-
-            if ($buffer !== '' && mb_strlen($buffer) + mb_strlen($paragraph) > $chunkSize) {
-                yield $buffer;
-                $buffer = mb_substr($buffer, -$overlap)."\n\n".$paragraph;  // small string
-            } else {
-                $buffer = $buffer === '' ? $paragraph : $buffer."\n\n".$paragraph;
-            }
-        }
-
-        if ($buffer !== '') {
-            yield $buffer;
         }
     }
 }
