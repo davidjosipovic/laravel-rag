@@ -27,7 +27,7 @@ test('a question requires a question field', function () {
 test('authenticated users can ask a question and receive an answer with sources', function () {
     Sanctum::actingAs(User::factory()->create());
 
-    $vector = array_fill(0, 1536, 0.1);
+    $vector = array_fill(0, 1024, 0.1);
 
     Embeddings::fake(fn ($prompt) => array_map(fn () => $vector, $prompt->inputs));
     Reranking::fake();
@@ -38,7 +38,7 @@ test('authenticated users can ask a question and receive an answer with sources'
 
     Rag::fake([
         new ToolCall(id: 'call_1', name: 'SearchKnowledgeBase', arguments: ['query' => 'What is Laravel?']),
-        ['value' => 'Laravel is a PHP web framework.'],
+        'Laravel is a PHP web framework.',
     ]);
 
     $response = $this->postJson('/api/chat', [

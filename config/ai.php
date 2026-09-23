@@ -13,11 +13,11 @@ return [
     |
     */
 
-    'default' => 'gemini',
+    'default' => 'local',
     'default_for_images' => 'gemini',
     'default_for_audio' => 'openai',
     'default_for_transcription' => 'openai',
-    'default_for_embeddings' => 'gemini',
+    'default_for_embeddings' => 'local-embed',
     'default_for_reranking' => 'cohere',
 
     /*
@@ -58,6 +58,14 @@ return [
                 'text' => [
                     'default' => env('LOCAL_AI_MODEL'),
                 ],
+            ],
+        ],
+
+        'local-embed' => [
+            'driver' => 'openai-compatible',
+            'url' => env('LOCAL_AI_EMBEDDING_URL'),
+            'key' => env('LOCAL_AI_API_KEY'),
+            'models' => [
                 'embeddings' => [
                     'default' => env('LOCAL_AI_EMBEDDING_MODEL'),
                     'dimensions' => 1024,

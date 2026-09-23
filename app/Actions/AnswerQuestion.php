@@ -6,7 +6,7 @@ use App\Ai\Agents\Rag;
 use App\Models\Chunk;
 use App\Models\User;
 use Illuminate\Support\Collection;
-use Laravel\Ai\Responses\StructuredAgentResponse;
+use Laravel\Ai\Responses\AgentResponse;
 
 class AnswerQuestion
 {
@@ -19,17 +19,17 @@ class AnswerQuestion
     {
 
         if ($user->conversations()->where('id', $conversationId)->exists()) {
-            /** @var StructuredAgentResponse $response */
+            /** @var AgentResponse $response */
             $response = $this->agent->continue($conversationId, as: $user)->prompt($question);
         } else {
-            /** @var StructuredAgentResponse $response */
+            /** @var AgentResponse $response */
             $response = $this->agent->forUser($user)->prompt($question);
         }
 
         $usage = $response->usage;
 
         return [
-            'answer' => (string) $response['value'],
+            'answer' => $response->text,
             'conversation_id' => $response->conversationId,
             'chunks' => $this->agent->retrievedChunks()->values(),
             'tokens_used' => $usage->promptTokens + $usage->completionTokens,

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('document_id')->constrained()->cascadeOnDelete();
             $table->unsignedInteger('chunk_index')->default(0);
             $table->text('content');
-            $table->vector('embedding', dimensions: 1536)->index()->nullable();
+            $table->vector('embedding', dimensions: 1024)->index()->nullable();
             $table->timestamps();
 
             $table->fullText(['content'])->language('simple');

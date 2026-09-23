@@ -22,7 +22,7 @@ class ChunkFactory extends Factory
             'document_id' => Document::factory(),
             'chunk_index' => 0,
             'content' => fake()->paragraph(),
-            'embedding' => array_fill(0, 1536, 0.1),
+            'embedding' => array_fill(0, 1024, 0.1),
         ];
     }
 }
