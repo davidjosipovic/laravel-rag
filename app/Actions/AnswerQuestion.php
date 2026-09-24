@@ -2,24 +2,35 @@
 
 namespace App\Actions;
 
+use App\Actions\HybridSearch\RetrieveRelevantChunks;
 use App\Ai\Agents\Rag;
 use App\Ai\Answer;
 use App\Models\User;
+use Laravel\Ai\Models\ConversationMessage;
 use Laravel\Ai\Responses\AgentResponse;
 
 class AnswerQuestion
 {
-    public function __construct(private Rag $agent) {}
+    public function __construct(private RetrieveRelevantChunks $retrieveRelevantChunks) {}
 
+    /**
+     * Search the knowledge base for the question and let the agent answer from the results.
+     *
+     * The search always runs in code rather than as an agent tool, because the local model
+     * does not reliably decide to call a tool on its own.
+     */
     public function handle(string $question, User $user, ?string $conversationId = null): Answer
     {
+        $chunks = $this->retrieveRelevantChunks->handle($this->searchQuery($question, $conversationId));
+
+        $agent = new Rag($chunks);
 
         if ($conversationId !== null) {
             /** @var AgentResponse $response */
-            $response = $this->agent->continue($conversationId, as: $user)->prompt($question);
+            $response = $agent->continue($conversationId, as: $user)->prompt($question);
         } else {
             /** @var AgentResponse $response */
-            $response = $this->agent->forUser($user)->prompt($question);
+            $response = $agent->forUser($user)->prompt($question);
         }
 
         $usage = $response->usage;
@@ -27,8 +38,27 @@ class AnswerQuestion
         return new Answer(
             answer: $response->text,
             conversationId: $response->conversationId,
-            chunks: $this->agent->retrievedChunks()->values(),
+            chunks: $chunks,
             tokensUsed: $usage->promptTokens + $usage->completionTokens,
         );
+    }
+
+    /**
+     * Prefix follow-up questions with the previous question, so that e.g. "a koje su nuspojave?"
+     * is still searched in the context of the medicine asked about before.
+     */
+    private function searchQuery(string $question, ?string $conversationId): string
+    {
+        if ($conversationId === null) {
+            return $question;
+        }
+
+        $previousQuestion = ConversationMessage::query()
+            ->where('conversation_id', $conversationId)
+            ->where('role', 'user')
+            ->latest()
+            ->value('content');
+
+        return trim($previousQuestion."\n".$question);
     }
 }

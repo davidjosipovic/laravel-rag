@@ -7,7 +7,6 @@ use App\Models\User;
 use Illuminate\Support\Str;
 use Laravel\Ai\Embeddings;
 use Laravel\Ai\Reranking;
-use Laravel\Ai\Responses\Data\ToolCall;
 use Laravel\Sanctum\Sanctum;
 
 test('guests cannot ask a question', function () {
@@ -53,15 +52,9 @@ test('authenticated users can ask a question and receive an answer with sources'
         ->for(Document::factory()->create(['title' => 'Laravel Docs']))
         ->create(['embedding' => $vector]);
 
-    Rag::fake([
-        new ToolCall(id: 'call_1', name: 'SearchKnowledgeBase', arguments: ['query' => 'What is Laravel?']),
-        'Laravel is a PHP web framework.',
-    ]);
+    Rag::fake(['Laravel is a PHP web framework.']);
 
-    $response = $this->postJson('/api/chat', [
-        'question' => 'What is Laravel?',
-        'top_k' => 1,
-    ]);
+    $response = $this->postJson('/api/chat', ['question' => 'What is Laravel?']);
 
     $response->assertOk()
         ->assertJsonPath('data.answer', 'Laravel is a PHP web framework.')
@@ -69,4 +62,38 @@ test('authenticated users can ask a question and receive an answer with sources'
         ->assertJsonPath('data.sources.0.document_title', 'Laravel Docs');
 
     Rag::assertPrompted('What is Laravel?');
+});
+
+test('follow-up questions are searched together with the previous question', function () {
+    $user = User::factory()->create();
+    Sanctum::actingAs($user);
+
+    Embeddings::fake();
+    Reranking::fake();
+    Chunk::factory()->create(['content' => 'Docetaksel se primjenjuje kao infuzija.']);
+
+    $conversation = $user->conversations()->create(['id' => (string) Str::uuid7(), 'title' => 'Docetaksel']);
+    $conversation->messages()->create([
+        'id' => (string) Str::uuid7(),
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+        'agent' => Rag::class,
+        'role' => 'user',
+        'content' => 'Kako se primjenjuje docetaksel?',
+        'attachments' => [],
+        'tool_calls' => [],
+        'tool_results' => [],
+        'usage' => [],
+        'meta' => [],
+    ]);
+
+    Rag::fake(['Najčešće nuspojave su umor i mučnina.']);
+
+    $this->postJson('/api/chat', [
+        'question' => 'A koje su nuspojave?',
+        'conversation_id' => $conversation->id,
+    ])->assertOk();
+
+    Reranking::assertReranked(fn ($prompt) => $prompt->query === "Kako se primjenjuje docetaksel?\nA koje su nuspojave?");
+    Rag::assertPrompted('A koje su nuspojave?');
 });
