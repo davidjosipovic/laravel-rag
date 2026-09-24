@@ -10,9 +10,20 @@ use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
+/**
+ * @property int $id
+ * @property string|null $title
+ * @property string|null $content
+ * @property string|null $mime_type
+ * @property DocumentStatus $status
+ * @property array<string, mixed>|null $metadata
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 #[Fillable(['content', 'mime_type', 'metadata', 'title', 'status'])]
 #[ObservedBy(DocumentObserver::class)]
 class Document extends Model implements HasMedia

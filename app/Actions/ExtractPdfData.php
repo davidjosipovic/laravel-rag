@@ -22,8 +22,8 @@ class ExtractPdfData
             'content' => $result['document']['md_content'] ?? '',
             'metadata' => [
                 'filename' => $result['document']['filename'] ?? basename($path),
-                'status' => $result['status'] ?? null,
-                'processing_time' => $result['processing_time'] ?? null,
+                'status' => $result['status'],
+                'processing_time' => $result['processing_time'],
             ],
         ];
     }
