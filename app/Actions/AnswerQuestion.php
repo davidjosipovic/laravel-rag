@@ -6,6 +6,7 @@ use App\Actions\HybridSearch\RetrieveRelevantChunks;
 use App\Ai\Agents\Rag;
 use App\Ai\Answer;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Laravel\Ai\Models\ConversationMessage;
 use Laravel\Ai\Responses\AgentResponse;
 
@@ -33,12 +34,16 @@ class AnswerQuestion
             $response = $agent->forUser($user)->prompt($question);
         }
 
+        $reply = $agent->reply($response->text);
+
+        $this->storeReply($response->conversationId, $reply ?? Rag::NOT_AVAILABLE);
+
         $usage = $response->usage;
 
         return new Answer(
-            answer: $response->text,
+            answer: $reply ?? Rag::NOT_AVAILABLE,
             conversationId: $response->conversationId,
-            chunks: $chunks,
+            chunks: $reply === null ? new Collection : $chunks,
             tokensUsed: $usage->promptTokens + $usage->completionTokens,
         );
     }
@@ -57,8 +62,28 @@ class AnswerQuestion
             ->where('conversation_id', $conversationId)
             ->where('role', 'user')
             ->latest()
+            ->orderByDesc('id')
             ->value('content');
 
         return trim($previousQuestion."\n".$question);
+    }
+
+    /**
+     * The conversation store saves the model's raw output; replace it with the cleaned-up reply the
+     * user saw, so the history endpoint and follow-up questions work with the actual answer.
+     */
+    private function storeReply(?string $conversationId, string $reply): void
+    {
+        if ($conversationId === null) {
+            return;
+        }
+
+        ConversationMessage::query()
+            ->where('conversation_id', $conversationId)
+            ->where('role', 'assistant')
+            ->latest()
+            ->orderByDesc('id')
+            ->limit(1)
+            ->update(['content' => $reply]);
     }
 }

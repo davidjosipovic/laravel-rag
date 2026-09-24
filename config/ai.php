@@ -31,6 +31,21 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Conversations
+    |--------------------------------------------------------------------------
+    |
+    | Generating a conversation title makes an extra call to the text model for
+    | every new conversation, which takes ~13 seconds on the local model. With
+    | it disabled, the title is the beginning of the first question instead.
+    |
+    */
+
+    'conversations' => [
+        'generate_title' => env('AI_GENERATE_CONVERSATION_TITLE', false),
+    ],
+
     'caching' => [
         'embeddings' => [
             'cache' => false,

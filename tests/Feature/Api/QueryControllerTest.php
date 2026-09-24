@@ -50,7 +50,7 @@ test('authenticated users can ask a question and receive an answer with sources'
 
     $chunk = Chunk::factory()
         ->for(Document::factory()->create(['title' => 'Laravel Docs']))
-        ->create(['embedding' => $vector]);
+        ->create(['content' => 'Laravel is a PHP web framework for building web applications.', 'embedding' => $vector]);
 
     Rag::fake(['Laravel is a PHP web framework.']);
 
@@ -96,4 +96,54 @@ test('follow-up questions are searched together with the previous question', fun
 
     Reranking::assertReranked(fn ($prompt) => $prompt->query === "Kako se primjenjuje docetaksel?\nA koje su nuspojave?");
     Rag::assertPrompted('A koje su nuspojave?');
+});
+
+test('questions the knowledge base cannot answer get the not available reply without sources', function () {
+    Sanctum::actingAs(User::factory()->create());
+
+    Embeddings::fake();
+    Reranking::fake();
+    Chunk::factory()->create(['content' => 'Bevacizumab se može kombinirati s olaparibom.']);
+
+    Rag::fake([Rag::NOT_AVAILABLE]);
+
+    $this->postJson('/api/chat', ['question' => 'Koje su nuspojave bevacizumaba?'])
+        ->assertOk()
+        ->assertJsonPath('data.answer', Rag::NOT_AVAILABLE)
+        ->assertJsonPath('data.sources', []);
+});
+
+test('the conversation history stores the cleaned-up reply instead of the raw model output', function () {
+    $user = User::factory()->create();
+    Sanctum::actingAs($user);
+
+    Embeddings::fake();
+    Reranking::fake();
+    Chunk::factory()->create(['content' => 'Docetaksel se primjenjuje svaka 3 tjedna.']);
+
+    Rag::fake(['Svaka 3 tjedna. '.Rag::NOT_AVAILABLE]);
+
+    $conversationId = $this->postJson('/api/chat', ['question' => 'Koliko često se daje docetaksel?'])
+        ->assertOk()
+        ->json('data.conversation_id');
+
+    $this->getJson("/api/chat/history/{$conversationId}")
+        ->assertOk()
+        ->assertJsonPath('data.0.role', 'user')
+        ->assertJsonPath('data.1.role', 'assistant')
+        ->assertJsonPath('data.1.content', 'Svaka 3 tjedna.');
+});
+
+test('new conversations are titled with the question instead of a generated title', function () {
+    $user = User::factory()->create();
+    Sanctum::actingAs($user);
+
+    Embeddings::fake();
+    Reranking::fake();
+
+    Rag::fake(['Pozdrav!']);
+
+    $this->postJson('/api/chat', ['question' => 'Bok, što sve možeš?'])->assertOk();
+
+    expect($user->conversations()->sole()->title)->toBe('Bok, što sve možeš?');
 });
