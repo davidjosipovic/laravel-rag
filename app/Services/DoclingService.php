@@ -13,7 +13,7 @@ class DoclingService
     {
         $response = Http::timeout(600)
             ->attach('files', fopen($path, 'r'), basename($path))
-            ->post(config('services.docling.url') . '/v1/convert/file', [
+            ->post(config('services.docling.url').'/v1/convert/file', [
                 'to_formats' => 'md',
                 'do_ocr' => 'true',
                 'table_mode' => 'accurate',
