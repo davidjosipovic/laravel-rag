@@ -1,0 +1,28 @@
+<?php
+
+namespace Laravel\Ai\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+/**
+ * @property string $id
+ * @property string|null $participant_type
+ * @property int|null $participant_id
+ * @property string $title
+ * @property \DateTimeInterface|null $created_at
+ * @property \DateTimeInterface|null $updated_at
+ */
+class Conversation extends Model {}
+
+/**
+ * @property string $id
+ * @property string $conversation_id
+ * @property string|null $participant_type
+ * @property int|null $participant_id
+ * @property string $agent
+ * @property string $role
+ * @property string $content
+ * @property \DateTimeInterface|null $created_at
+ * @property \DateTimeInterface|null $updated_at
+ */
+class ConversationMessage extends Model {}

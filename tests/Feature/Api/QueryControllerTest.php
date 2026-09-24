@@ -4,6 +4,7 @@ use App\Ai\Agents\Rag;
 use App\Models\Chunk;
 use App\Models\Document;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Laravel\Ai\Embeddings;
 use Laravel\Ai\Reranking;
 use Laravel\Ai\Responses\Data\ToolCall;
@@ -23,6 +24,22 @@ test('a question requires a question field', function () {
     $response->assertUnprocessable()
         ->assertJsonValidationErrors('question');
 });
+
+test('a question cannot continue a conversation that does not belong to the user', function (string $conversationId) {
+    Sanctum::actingAs(User::factory()->create());
+
+    $this->postJson('/api/chat', [
+        'question' => 'What is Laravel?',
+        'conversation_id' => $conversationId,
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors('conversation_id');
+})->with([
+    'unknown conversation' => fn () => 'missing-id',
+    'another users conversation' => fn () => User::factory()->create()->conversations()->create([
+        'id' => (string) Str::uuid7(),
+        'title' => 'Someone else',
+    ])->id,
+]);
 
 test('authenticated users can ask a question and receive an answer with sources', function () {
     Sanctum::actingAs(User::factory()->create());

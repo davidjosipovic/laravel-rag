@@ -1,6 +1,7 @@
 <?php
 
 use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
+use Dedoc\Scramble\SecurityDocumentation\MiddlewareAuthSecurityStrategy;
 
 return [
     /*
@@ -50,11 +51,11 @@ return [
         /*
          * Description rendered on the home page of the API documentation (`/docs/api`).
          */
-        'description' => '',
+        'description' => 'REST API for a RAG (retrieval-augmented generation) knowledge base. Ask questions answered from uploaded documents and manage conversation history. Authenticate with a Sanctum bearer token obtained from `/login` or `/register`.',
     ],
 
     'ui' => [
-        'title' => null,
+        'title' => 'Laravel RAG API',
     ],
 
     /*
@@ -177,6 +178,6 @@ return [
      *     ],
      * ],
      */
-    'security_strategy' => \Dedoc\Scramble\SecurityDocumentation\MiddlewareAuthSecurityStrategy::class,
-    //'security_strategy' => null,
+    'security_strategy' => MiddlewareAuthSecurityStrategy::class,
+    // 'security_strategy' => null,
 ];

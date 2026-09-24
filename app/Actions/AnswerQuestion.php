@@ -3,22 +3,18 @@
 namespace App\Actions;
 
 use App\Ai\Agents\Rag;
-use App\Models\Chunk;
+use App\Ai\Answer;
 use App\Models\User;
-use Illuminate\Support\Collection;
 use Laravel\Ai\Responses\AgentResponse;
 
 class AnswerQuestion
 {
     public function __construct(private Rag $agent) {}
 
-    /**
-     * @return array{answer: string, conversation_id: ?string, chunks: Collection<int, Chunk>, tokens_used: int}
-     */
-    public function handle(string $question, User $user, ?string $conversationId = null): array
+    public function handle(string $question, User $user, ?string $conversationId = null): Answer
     {
 
-        if ($user->conversations()->where('id', $conversationId)->exists()) {
+        if ($conversationId !== null) {
             /** @var AgentResponse $response */
             $response = $this->agent->continue($conversationId, as: $user)->prompt($question);
         } else {
@@ -28,11 +24,11 @@ class AnswerQuestion
 
         $usage = $response->usage;
 
-        return [
-            'answer' => $response->text,
-            'conversation_id' => $response->conversationId,
-            'chunks' => $this->agent->retrievedChunks()->values(),
-            'tokens_used' => $usage->promptTokens + $usage->completionTokens,
-        ];
+        return new Answer(
+            answer: $response->text,
+            conversationId: $response->conversationId,
+            chunks: $this->agent->retrievedChunks()->values(),
+            tokensUsed: $usage->promptTokens + $usage->completionTokens,
+        );
     }
 }

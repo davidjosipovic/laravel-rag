@@ -41,7 +41,18 @@ test('users can login with valid credentials', function () {
     ]);
 
     $response->assertOk()
-        ->assertJsonStructure(['user', 'token']);
+        ->assertJsonStructure(['user' => ['id', 'name', 'email'], 'token'])
+        ->assertJsonMissingPath('user.is_admin');
+});
+
+test('users cannot login with an unknown email', function () {
+    $response = $this->postJson('/api/login', [
+        'email' => 'missing@example.com',
+        'password' => 'password',
+    ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors('email');
 });
 
 test('users cannot login with an invalid password', function () {

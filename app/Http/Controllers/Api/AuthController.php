@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,6 +12,11 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    /**
+     * Register.
+     *
+     * Creates a new user account and returns an API token for it.
+     */
     public function register(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -28,11 +34,16 @@ class AuthController extends Controller
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
+            'user' => new UserResource($user),
             'token' => $token,
         ], 201);
     }
 
+    /**
+     * Log in.
+     *
+     * Returns an API token to send as a `Bearer` token on authenticated endpoints.
+     */
     public function login(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -51,11 +62,16 @@ class AuthController extends Controller
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
+            'user' => new UserResource($user),
             'token' => $token,
         ]);
     }
 
+    /**
+     * Log out.
+     *
+     * Revokes the token used for the current request.
+     */
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();

@@ -13,7 +13,7 @@ Route::middleware(['throttle:api', 'auth:sanctum'])->group(function () {
     Route::prefix('chat')->group(function () {
         Route::post('/', [ChatController::class, 'chat']);
         Route::get('list', [ChatController::class, 'list']);
-        Route::get('history/{conversationId}', [ChatController::class, 'history']);
+        Route::get('history/{conversation}', [ChatController::class, 'history']);
         Route::delete('{conversation}', [ChatController::class, 'delete']);
 
     });

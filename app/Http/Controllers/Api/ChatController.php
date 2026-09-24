@@ -6,14 +6,22 @@ use App\Actions\AnswerQuestion;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChatRequest;
 use App\Http\Resources\AnswerResource;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\JsonResponse;
+use App\Http\Resources\ConversationMessageResource;
+use App\Http\Resources\ConversationResource;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Gate;
 use Laravel\Ai\Models\Conversation;
-use Laravel\Ai\Models\ConversationMessage;
 
 class ChatController extends Controller
 {
+    /**
+     * Ask a question.
+     *
+     * Answers the question using the knowledge base and returns the source documents it was based on.
+     * Pass `conversation_id` to continue an existing conversation; otherwise a new one is started.
+     */
     public function chat(ChatRequest $request, AnswerQuestion $answerQuestion): AnswerResource
     {
         $validated = $request->validated();
@@ -23,31 +31,43 @@ class ChatController extends Controller
         $result = $answerQuestion->handle($question, $request->user(), $conversationId);
 
         return new AnswerResource($result);
-
     }
 
-    /** @return Collection<int, Conversation> */
-    public function list(Request $request): Collection
+    /**
+     * List conversations.
+     *
+     * Returns the authenticated user's conversations, most recently updated first.
+     */
+    public function list(Request $request): AnonymousResourceCollection
     {
-        return $request->user()->conversations()->get();
+        $conversations = $request->user()->conversations()->latest('updated_at')->get();
+
+        return ConversationResource::collection($conversations);
     }
 
-    /** @return Collection<int, ConversationMessage> */
-    public function history(Request $request, string $conversationId): Collection
+    /**
+     * Get conversation history.
+     *
+     * Returns the messages of a conversation in chronological order.
+     */
+    public function history(Conversation $conversation): AnonymousResourceCollection
     {
-        $response = ConversationMessage::where('conversation_id', $conversationId)->get(['role', 'content']);
+        Gate::authorize('view', $conversation);
 
-        return $response;
+        $messages = $conversation->messages()->oldest()->get();
+
+        return ConversationMessageResource::collection($messages);
     }
 
-    public function delete(Request $request, Conversation $conversation): JsonResponse
+    /**
+     * Delete a conversation.
+     */
+    public function delete(Conversation $conversation): Response
     {
-        if ($request->user()->id !== $conversation['participant_id']) {
-            return response()->json('Not authorized');
-        }
+        Gate::authorize('delete', $conversation);
+
         $conversation->delete();
 
-        return response()->json('Deleted', 200);
-
+        return response()->noContent();
     }
 }

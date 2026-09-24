@@ -3,6 +3,9 @@ includes:
     - vendor/nesbot/carbon/extension.neon
 
 parameters:
+    stubFiles:
+        - phpstan-laravel-ai.stub
+
     paths:
         - app/
         - bootstrap/app.php
