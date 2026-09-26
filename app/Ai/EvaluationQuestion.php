@@ -19,4 +19,14 @@ readonly class EvaluationQuestion
     {
         return $this->category === 'neodgovorivo';
     }
+
+    /**
+     * The titles of the documents that contain the answer; the test set separates them with semicolons.
+     *
+     * @return list<string>
+     */
+    public function sourceDocuments(): array
+    {
+        return array_values(array_filter(array_map('trim', explode(';', $this->source))));
+    }
 }

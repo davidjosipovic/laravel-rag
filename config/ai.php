@@ -56,19 +56,13 @@ return [
     | Reranked chunks scoring below the minimum relevance are dropped; the
     | scale differs per reranker, so recalibrate it when switching (0.3 is
     | calibrated for Cohere: relevant chunks scored 0.33–0.94, off-topic
-    | questions at most 0.24). The
-    | judge grades answers in evaluations and should be a stronger model
-    | than the one answering; Groq's free quota fits a full evaluation.
+    | questions at most 0.24).
     |
     */
 
     'rag' => [
         'temperature' => (float) env('AI_RAG_TEMPERATURE', 0.2),
         'min_relevance' => (float) env('AI_RAG_MIN_RELEVANCE', 0.3),
-        'judge' => [
-            'provider' => env('AI_JUDGE_PROVIDER', 'groq'),
-            'model' => env('AI_JUDGE_MODEL', 'openai/gpt-oss-120b'),
-        ],
     ],
 
     'caching' => [
