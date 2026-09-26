@@ -56,13 +56,19 @@ return [
     | Reranked chunks scoring below the minimum relevance are dropped; the
     | scale differs per reranker, so recalibrate it when switching (0.3 is
     | calibrated for Cohere: relevant chunks scored 0.33–0.94, off-topic
-    | questions at most 0.24).
+    | questions at most 0.24). The local qwen3-reranker scores almost
+    | binary (relevant ~0.99, unrelated below 0.1, a colloquial question's
+    | only relevant chunk 0.24), so use 0.15 with it; 0.3 and above drop
+    | that chunk. At most max_chunks chunks are given to the model; more
+    | than 5 added no relevant passages on the test set and confused the
+    | small local model.
     |
     */
 
     'rag' => [
         'temperature' => (float) env('AI_RAG_TEMPERATURE', 0.2),
         'min_relevance' => (float) env('AI_RAG_MIN_RELEVANCE', 0.3),
+        'max_chunks' => (int) env('AI_RAG_MAX_CHUNKS', 5),
     ],
 
     'caching' => [

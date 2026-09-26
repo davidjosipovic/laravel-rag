@@ -10,7 +10,9 @@ beforeEach(function () {
     Embeddings::fake();
 });
 
-test('it returns reranked chunks in order of relevance', function () {
+test('it returns reranked chunks in order of relevance with their scores', function () {
+    config(['ai.rag.max_chunks' => 5]);
+
     $first = Chunk::factory()->create(['content' => 'Docetaksel se primjenjuje kao infuzija.']);
     $second = Chunk::factory()->create(['content' => 'Docetaksel može uzrokovati umor.']);
 
@@ -22,7 +24,10 @@ test('it returns reranked chunks in order of relevance', function () {
     $chunks = app(RetrieveRelevantChunks::class)->handle('docetaksel');
 
     expect($chunks->pluck('id')->all())->toBe([$second->id, $first->id])
+        ->and($chunks->pluck('relevance')->all())->toBe([0.9, 0.5])
         ->and($chunks->first()->relationLoaded('document'))->toBeTrue();
+
+    Reranking::assertReranked(fn ($prompt): bool => $prompt->limit === 5);
 });
 
 test('it drops chunks the reranker considers irrelevant', function () {

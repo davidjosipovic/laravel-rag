@@ -50,7 +50,7 @@ function storedRetrieval(): array
 
 test('the retrieved passages are checked against the sources and the expected answer', function () {
     fakeRetrieval([
-        'Koliko prije docetaksela treba izvaditi krvne nalaze?' => [chunkFrom('AI_lijekovi.docx', 'Krvne nalaze uzorkovati najviše 72 sata prije terapije.')],
+        'Koliko prije docetaksela treba izvaditi krvne nalaze?' => [chunkFrom('AI_lijekovi.docx', 'Krvne nalaze uzorkovati najviše 72 sata prije terapije.')->setAttribute('relevance', 0.81234)],
         'Kako se razlikuju temozolomid i docetaksel?' => [chunkFrom('gliom.docx', 'Temozolomid se primjenjuje kod glioma.')],
         'Koliko košta Ferinject?' => [chunkFrom('AI_lijekovi.docx', 'Ferinject se daje infuzijom.')],
     ]);
@@ -65,9 +65,25 @@ test('the retrieved passages are checked against the sources and the expected an
 
     expect($results)->toMatchArray(['label' => 'Bigger chunks', 'commit' => 'abc1234'])
         ->and($factual)->toMatchArray(['source_hit' => true, 'coverage' => 0.8, 'missing_terms' => ['plani']])
-        ->and($factual['chunks'][0])->toMatchArray(['document' => 'AI_lijekovi.docx', 'heading' => 'Docetaksel'])
+        ->and($factual['chunks'][0])->toMatchArray(['document' => 'AI_lijekovi.docx', 'heading' => 'Docetaksel', 'relevance' => 0.8123])
         ->and($comparison)->toMatchArray(['source_hit' => true, 'coverage' => 0.667, 'missing_terms' => ['uzima']])
         ->and($unanswerable)->toMatchArray(['source_hit' => null, 'coverage' => null]);
+});
+
+test('numbers written as words match digits and the false premise label is not an expected term', function () {
+    Storage::disk('local')->put('evaluation/questions.csv', implode("\n", [
+        'id,kategorija,pitanje,ocekivani_odgovor,izvor',
+        'Q03,cinjenicno,Kojim danima ciklusa se primjenjuje nab-paklitaksel?,"Najčešće 1., 8. i 15. dan ciklusa.",AI_lijekovi.docx',
+        'Q73,kriva_premisa,Koliko tableta dnevno se uzima trastuzumab?,Kriva premisa – trastuzumab je infuzija.,AI_lijekovi.docx',
+    ]));
+    fakeRetrieval([
+        'Kojim danima ciklusa se primjenjuje nab-paklitaksel?' => [chunkFrom('AI_lijekovi.docx', 'Najčešće na prvi, osmi i petnaesti dan ciklusa.')],
+        'Koliko tableta dnevno se uzima trastuzumab?' => [chunkFrom('AI_lijekovi.docx', 'Trastuzumab se daje kao infuzija.')],
+    ]);
+
+    $this->artisan('rag:evaluate-retrieval')->assertSuccessful();
+
+    expect(array_column(storedRetrieval()['questions'], 'coverage'))->toEqual([1, 1]);
 });
 
 test('a question that retrieves nothing misses its source', function () {

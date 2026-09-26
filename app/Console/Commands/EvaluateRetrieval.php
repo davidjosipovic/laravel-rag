@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Storage;
  *   comparing runs rather than as an absolute score;
  * - unanswerable questions should retrieve nothing above the minimum relevance.
  *
- * @phpstan-type RetrievedChunk array{id: int, document: ?string, heading: ?string}
+ * @phpstan-type RetrievedChunk array{id: int, document: ?string, heading: ?string, relevance: ?float}
  * @phpstan-type QuestionResult array{id: string, category: string, question: string, expected_answer: string, source: string, source_hit: ?bool, coverage: ?float, missing_terms: list<string>, chunks: list<RetrievedChunk>}
  */
 #[Signature('rag:evaluate-retrieval
@@ -50,6 +50,37 @@ class EvaluateRetrieval extends Command
      */
     private const float COVERAGE_CHANGE = 0.1;
 
+    /**
+     * Croatian number words and their common forms; "drugi" is left out, because it mostly means "other".
+     *
+     * @var array<int, string>
+     */
+    private const array NUMBER_WORDS = [
+        11 => 'jedanaest\p{L}{0,3}',
+        12 => 'dvanaest\p{L}{0,3}',
+        13 => 'trinaest\p{L}{0,3}',
+        14 => 'četrnaest\p{L}{0,3}',
+        15 => 'petnaest\p{L}{0,3}',
+        16 => 'šesnaest\p{L}{0,3}',
+        17 => 'sedamnaest\p{L}{0,3}',
+        18 => 'osamnaest\p{L}{0,3}',
+        19 => 'devetnaest\p{L}{0,3}',
+        20 => 'dvadeset\p{L}{0,3}',
+        30 => 'trideset\p{L}{0,3}',
+        40 => 'četrdeset\p{L}{0,3}',
+        50 => 'pedeset\p{L}{0,3}',
+        10 => 'deset|deset[io]\p{L}{0,2}|desetak',
+        1 => 'jedan|jedn[aeiou]\p{L}{0,2}|prv[aeiou]\p{L}{0,2}',
+        2 => 'dva|dvije|dvaju|dvoje',
+        3 => 'tri|troje|treć[aeiou]\p{L}{0,2}',
+        4 => 'četiri|četvero|četvrt[aeiou]\p{L}{0,2}',
+        5 => 'pet|pet[aeiou]|pet[aeiou]g|petero',
+        6 => 'šest|šest[aeiou]\p{L}{0,2}|šestero',
+        7 => 'sedam|sedm[aeiou]\p{L}{0,2}',
+        8 => 'osam|osm[aeiou]\p{L}{0,2}',
+        9 => 'devet|devet[aeiou]\p{L}{0,2}',
+    ];
+
     public function handle(RetrieveRelevantChunks $retrieveRelevantChunks): int
     {
         $questions = $this->questions();
@@ -63,6 +94,7 @@ class EvaluateRetrieval extends Command
             'embeddings' => config('ai.default_for_embeddings'),
             'reranker' => config('ai.default_for_reranking'),
             'min_relevance' => config()->float('ai.rag.min_relevance'),
+            'max_chunks' => config()->integer('ai.rag.max_chunks'),
             'questions' => [],
         ];
 
@@ -107,7 +139,7 @@ class EvaluateRetrieval extends Command
         $sources = array_map('mb_strtolower', $question->sourceDocuments());
         $retrievedDocuments = $chunks->toBase()->map(fn (Chunk $chunk): string => mb_strtolower((string) $chunk->document->title))->unique();
 
-        $expectedTerms = $question->isUnanswerable() ? [] : $this->terms($question->expectedAnswer);
+        $expectedTerms = $question->isUnanswerable() ? [] : $this->terms((string) preg_replace('/^kriva premisa\s*[–-]?\s*/iu', '', $question->expectedAnswer));
         $passageTerms = $this->terms($chunks->map(fn (Chunk $chunk): string => $chunk->heading.' '.$chunk->content)->implode(' '));
         $missingTerms = array_values(array_diff($expectedTerms, $passageTerms));
 
@@ -124,18 +156,27 @@ class EvaluateRetrieval extends Command
                 'id' => $chunk->id,
                 'document' => $chunk->document->title,
                 'heading' => $chunk->heading,
+                'relevance' => is_numeric($chunk->getAttribute('relevance')) ? round((float) $chunk->getAttribute('relevance'), 4) : null,
             ])->all()),
         ];
     }
 
     /**
      * Word stems (the first five letters, so different Croatian word forms match) and numbers.
+     * Numbers written as words are turned into digits first, because the documents often spell
+     * out what the test set writes as digits ("prvi, osmi i petnaesti dan" for "1., 8. i 15. dan").
      *
      * @return list<string>
      */
     private function terms(string $text): array
     {
-        preg_match_all('/\p{L}{5,}|\d+(?:[.,]\d+)?/u', mb_strtolower($text), $matches);
+        $text = mb_strtolower($text);
+
+        foreach (self::NUMBER_WORDS as $number => $pattern) {
+            $text = (string) preg_replace('/\b(?:'.$pattern.')\b/u', (string) $number, $text);
+        }
+
+        preg_match_all('/\p{L}{5,}|\d+(?:[.,]\d+)?/u', $text, $matches);
 
         return array_values(array_unique(array_map(fn (string $term): string => mb_substr($term, 0, 5), $matches[0])));
     }

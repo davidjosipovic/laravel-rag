@@ -17,12 +17,15 @@ class RetrieveRelevantChunks
      * Find the chunks that answer the query, most relevant first.
      *
      * Full-text and vector search results are fused with reciprocal rank fusion, then reranked,
-     * and only chunks the reranker considers relevant are kept.
+     * and only chunks the reranker considers relevant are kept. Each chunk gets the reranker's score
+     * as its `relevance` attribute.
      *
      * @return Collection<int, Chunk>
      */
-    public function handle(string $query, int $limit = 8): Collection
+    public function handle(string $query, ?int $limit = null): Collection
     {
+        $limit ??= config()->integer('ai.rag.max_chunks');
+
         $ids = $this->fuse([
             $this->fullTextSearch->handle($query, 50),
             $this->similaritySearch->handle($query, 50),
@@ -41,7 +44,7 @@ class RetrieveRelevantChunks
         return new Collection(
             collect($ranking->results)
                 ->filter(fn ($result): bool => $result->score >= $this->minRelevance())
-                ->map(fn ($result): Chunk => $candidates[$result->index])
+                ->map(fn ($result): Chunk => $candidates[$result->index]->setAttribute('relevance', $result->score))
                 ->values()
                 ->all()
         );
