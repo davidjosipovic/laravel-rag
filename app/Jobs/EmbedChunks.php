@@ -37,12 +37,19 @@ class EmbedChunks implements ShouldQueue
             ->chunkById(
                 10,
                 function ($chunks) use (&$processed) {
-                    $vectors = Embeddings::for($chunks->pluck('content')->all())->generate()->embeddings;
-                    foreach ($chunks as $i => $chunk) {
+                    $inputs = $chunks->map(
+                        fn (Chunk $chunk) => $chunk->heading
+                            ? $chunk->heading."\n\n".$chunk->content
+                            : $chunk->content
+                    )->all();
+
+                    $vectors = Embeddings::for($inputs)->generate()->embeddings;
+
+                    foreach ($chunks->values() as $i => $chunk) {
                         $chunk->update(['embedding' => $vectors[$i]]);
                     }
-                    $processed += $chunks->count();
 
+                    $processed += $chunks->count();
                 }
             );
         if ($processed === 0) {

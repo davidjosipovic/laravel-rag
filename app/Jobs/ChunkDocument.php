@@ -30,15 +30,15 @@ class ChunkDocument implements ShouldQueue
         Chunk::where('document_id', $this->documentId)->delete();
         $document->update(['status' => DocumentStatus::Chunking]);
 
-        $chunks = $chunker->chunk($document->content);
-
-        foreach ($chunks as $index => $text) {
+        foreach ($chunker->chunk($document->content) as $index => $chunk) {
             Chunk::create([
                 'document_id' => $this->documentId,
                 'chunk_index' => $index,
-                'content' => $text,
+                'content' => $chunk['text'],
+                'heading' => $chunk['heading'],
             ]);
         }
+
         $document->update(['status' => DocumentStatus::Chunked]);
     }
 }

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Pgvector\Laravel\HasNeighbors;
 
 #[Hidden(['embedding'])]
-#[Fillable(['document_id', 'chunk_index', 'metadata', 'embedding', 'content'])]
+#[Fillable(['document_id', 'chunk_index', 'metadata', 'embedding', 'content', 'heading'])]
 class Chunk extends Model
 {
     /** @use HasFactory<ChunkFactory> */
