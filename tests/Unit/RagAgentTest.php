@@ -6,6 +6,9 @@ use App\Models\Document;
 use Illuminate\Database\Eloquent\Collection;
 use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Gateway\TextGenerationOptions;
+use Tests\TestCase;
+
+pest()->extend(TestCase::class);
 
 test('thinking mode is disabled for the local model', function () {
     expect((new Rag)->providerOptions('local'))
@@ -64,6 +67,12 @@ test('with passages the rules come after the passages', function () {
 
 test('answers are limited in length so a looping model cannot hit the request timeout', function () {
     expect(TextGenerationOptions::forAgent(new Rag)->maxTokens)->toBe(600);
+});
+
+test('the temperature comes from the config', function () {
+    config(['ai.rag.temperature' => 0.0]);
+
+    expect(TextGenerationOptions::forAgent(new Rag)->temperature)->toBe(0.0);
 });
 
 test('the local model gets a repeat penalty against repetition loops', function () {

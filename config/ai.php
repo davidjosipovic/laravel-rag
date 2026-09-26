@@ -18,7 +18,7 @@ return [
     'default_for_audio' => 'openai',
     'default_for_transcription' => 'openai',
     'default_for_embeddings' => 'local-embed',
-    'default_for_reranking' => 'cohere',
+    'default_for_reranking' => env('AI_RERANKING_PROVIDER', 'cohere'),
 
     /*
     |--------------------------------------------------------------------------
@@ -44,6 +44,31 @@ return [
 
     'conversations' => [
         'generate_title' => env('AI_GENERATE_CONVERSATION_TITLE', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | RAG Answers And Evaluation
+    |--------------------------------------------------------------------------
+    |
+    | A low temperature keeps answers close to the retrieved passages. The
+    | evaluation command sets it to 0 so repeated runs are comparable.
+    | Reranked chunks scoring below the minimum relevance are dropped; the
+    | scale differs per reranker, so recalibrate it when switching (0.3 is
+    | calibrated for Cohere: relevant chunks scored 0.33–0.94, off-topic
+    | questions at most 0.24). The
+    | judge grades answers in evaluations and should be a stronger model
+    | than the one answering; Groq's free quota fits a full evaluation.
+    |
+    */
+
+    'rag' => [
+        'temperature' => (float) env('AI_RAG_TEMPERATURE', 0.2),
+        'min_relevance' => (float) env('AI_RAG_MIN_RELEVANCE', 0.3),
+        'judge' => [
+            'provider' => env('AI_JUDGE_PROVIDER', 'groq'),
+            'model' => env('AI_JUDGE_MODEL', 'openai/gpt-oss-120b'),
+        ],
     ],
 
     'caching' => [
@@ -155,6 +180,17 @@ return [
         'groq' => [
             'driver' => 'groq',
             'key' => env('GROQ_API_KEY'),
+        ],
+
+        'local-rerank' => [
+            'driver' => 'jina',
+            'url' => env('LOCAL_AI_RERANK_URL'),
+            'key' => env('LOCAL_AI_API_KEY'),
+            'models' => [
+                'reranking' => [
+                    'default' => env('LOCAL_AI_RERANK_MODEL'),
+                ],
+            ],
         ],
 
         'jina' => [

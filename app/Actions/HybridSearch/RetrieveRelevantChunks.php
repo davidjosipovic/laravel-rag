@@ -8,12 +8,6 @@ use Laravel\Ai\Reranking;
 
 class RetrieveRelevantChunks
 {
-    /**
-     * Reranker scores below this are treated as unrelated to the question. Measured on the
-     * knowledge base: relevant chunks scored 0.33–0.94, greetings and off-topic questions at most 0.24.
-     */
-    public const float MIN_RELEVANCE = 0.3;
-
     public function __construct(
         private FullTextSearch $fullTextSearch,
         private SimilaritySearch $similaritySearch,
@@ -46,11 +40,20 @@ class RetrieveRelevantChunks
 
         return new Collection(
             collect($ranking->results)
-                ->filter(fn ($result): bool => $result->score >= self::MIN_RELEVANCE)
+                ->filter(fn ($result): bool => $result->score >= $this->minRelevance())
                 ->map(fn ($result): Chunk => $candidates[$result->index])
                 ->values()
                 ->all()
         );
+    }
+
+    /**
+     * Reranker scores below this are treated as unrelated to the question. The scale depends on
+     * the reranker, so the threshold is configured per setup and calibrated on the test set.
+     */
+    public function minRelevance(): float
+    {
+        return config()->float('ai.rag.min_relevance');
     }
 
     /**

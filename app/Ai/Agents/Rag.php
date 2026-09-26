@@ -6,7 +6,6 @@ use App\Models\Chunk;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 use Laravel\Ai\Attributes\MaxTokens;
-use Laravel\Ai\Attributes\Temperature;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
@@ -15,11 +14,9 @@ use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Promptable;
 
 /**
- * A low temperature keeps the answers close to the retrieved passages. The token limit keeps
- * a model that starts repeating itself from running into the request timeout.
+ * The token limit keeps a model that starts repeating itself from running into the request timeout.
  */
 #[MaxTokens(600)]
-#[Temperature(0.2)]
 class Rag implements Agent, Conversational, HasProviderOptions
 {
     use Promptable, RemembersConversations;
@@ -52,6 +49,15 @@ class Rag implements Agent, Conversational, HasProviderOptions
      * @param  Collection<int, Chunk>  $chunks  Knowledge base passages retrieved for the current question.
      */
     public function __construct(private Collection $chunks = new Collection) {}
+
+    /**
+     * A low temperature keeps the answers close to the retrieved passages. It is configurable,
+     * so the evaluation can set it to 0 and get comparable runs.
+     */
+    public function temperature(): float
+    {
+        return config()->float('ai.rag.temperature');
+    }
 
     /**
      * The rules come after the passages, because the small local model follows the last instructions most reliably.

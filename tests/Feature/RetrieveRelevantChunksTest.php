@@ -26,11 +26,13 @@ test('it returns reranked chunks in order of relevance', function () {
 });
 
 test('it drops chunks the reranker considers irrelevant', function () {
+    config(['ai.rag.min_relevance' => 0.3]);
+
     $relevant = Chunk::factory()->create(['content' => 'Docetaksel se primjenjuje kao infuzija.']);
     $irrelevant = Chunk::factory()->create(['content' => 'Docetaksel se čuva u hladnjaku.']);
 
     Reranking::fake(fn ($prompt) => [
-        new RankedDocument(index: array_search($relevant->content, $prompt->documents), document: $relevant->content, score: RetrieveRelevantChunks::MIN_RELEVANCE),
+        new RankedDocument(index: array_search($relevant->content, $prompt->documents), document: $relevant->content, score: 0.3),
         new RankedDocument(index: array_search($irrelevant->content, $prompt->documents), document: $irrelevant->content, score: 0.1),
     ]);
 
