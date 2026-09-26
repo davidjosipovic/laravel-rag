@@ -71,12 +71,16 @@ class Rag implements Agent, Conversational, HasProviderOptions
 
         return $role."\n\n".$this->context()."\n\n".
             'Pravila:'."\n".
-            '- Prvo provjeri odnose li se odlomci na točno ono što se pita: isti lijek, isti postupak i istu temu '.
-            '(npr. nuspojave, dozu, način primjene). Ako se lijek u odlomcima samo spominje, a traženi podatak '.
-            'o njemu ne piše, odgovori točno ovom rečenicom i ničim više: "'.self::NOT_AVAILABLE.'" '.
+            '- Naslov iza oznake — kaže na koji se lijek ili temu odlomak odnosi. Podatak iz odlomka pripiši samo '.
+            'lijeku iz njegovog naslova i ne miješaj podatke različitih lijekova.'."\n".
+            '- Ako pitanje sadrži tvrdnju koju odlomci opovrgavaju ili ne potvrđuju (npr. da se lijek uzima kao tableta, '.
+            'da nešto uzrokuje bolest, da se lijek daje određenoj skupini), ne odbijaj pitanje: reci da tvrdnja nije '.
+            'točna i navedi što o tome piše u odlomcima.'."\n".
+            '- Ako odlomci odgovaraju samo na dio pitanja, odgovori na taj dio.'."\n".
+            '- Samo ako nijedan odlomak ne sadrži podatak o onome što se pita (isti lijek ili postupak i ista tema, '.
+            'npr. nuspojave, doza, način primjene), odgovori točno ovom rečenicom i ničim više: "'.self::NOT_AVAILABLE.'" '.
             'Tu rečenicu koristi samo umjesto odgovora, nikada zajedno s odgovorom.'."\n".
-            '- Nikada ne dodaji podatke kojih nema u odlomcima, ni djelomično. Ne miješaj podatke različitih lijekova.'."\n".
-            '- Ako pitanje sadrži tvrdnju koju odlomci opovrgavaju, reci da tvrdnja nije točna i navedi što piše u odlomcima.'."\n".
+            '- Nikada ne dodaji podatke kojih nema u odlomcima, ni djelomično.'."\n".
             '- Na poruke koje nisu medicinsko pitanje (npr. pozdrav, zahvala) odgovori kratko.'."\n".
             '- Odgovaraj sažeto: izravno, u nekoliko rečenica ili kratkoj listi, bez uvoda i ponavljanja pitanja.'."\n".
             '- Brojeve, doze, vremenske rokove i uvjete (npr. "tri ili više od", "najviše 72 sata") prenesi točno kako '.
@@ -125,7 +129,7 @@ class Rag implements Agent, Conversational, HasProviderOptions
             return null;
         }
 
-        $passageStems = $this->stems($this->chunks->pluck('content')->implode(' '));
+        $passageStems = $this->stems($this->chunks->map(fn (Chunk $chunk): string => $chunk->heading.' '.$chunk->content)->implode(' '));
 
         return count(array_intersect($answerStems, $passageStems)) / count($answerStems);
     }
@@ -161,11 +165,13 @@ class Rag implements Agent, Conversational, HasProviderOptions
 
     /**
      * Format the retrieved passages for the system prompt, so they are not stored in the conversation history.
+     * The heading tells the model which medicine a passage is about, so it does not mix up neighbouring ones.
      */
     private function context(): string
     {
         return "Odlomci iz baze znanja:\n\n".$this->chunks
-            ->map(fn (Chunk $chunk, int $index): string => '['.($index + 1).'] '.$chunk->document->title."\n".$chunk->content)
+            ->map(fn (Chunk $chunk, int $index): string => '['.($index + 1).'] '.$chunk->document->title
+                .($chunk->heading ? ' — '.$chunk->heading : '')."\n".$chunk->content)
             ->implode("\n\n");
     }
 }

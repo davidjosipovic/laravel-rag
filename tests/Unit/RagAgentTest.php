@@ -29,6 +29,23 @@ test('retrieved passages are included in the instructions', function () {
         ->toContain("[1] AI_lijekovi.docx\nKrvne nalaze treba uzorkovati najviše 72 sata prije terapije.");
 });
 
+test('passage headings are shown next to the document title', function () {
+    $chunk = (new Chunk)->forceFill(['heading' => 'EVEROLIMUS', 'content' => 'Ne uzimati dodatnu tabletu.']);
+    $chunk->setRelation('document', (new Document)->forceFill(['title' => 'AI_lijekovi3.docx']));
+
+    expect((new Rag(new Collection([$chunk])))->instructions())
+        ->toContain("[1] AI_lijekovi3.docx — EVEROLIMUS\nNe uzimati dodatnu tabletu.");
+});
+
+test('false premises are corrected instead of answered with the not available sentence', function () {
+    $instructions = ragWithPassage('Trastuzumab se aplicira kao intravenska infuzija.')->instructions();
+
+    expect($instructions)
+        ->toContain('ne odbijaj pitanje: reci da tvrdnja nije točna')
+        ->toContain('Ako odlomci odgovaraju samo na dio pitanja, odgovori na taj dio.')
+        ->and(strpos($instructions, 'ne odbijaj pitanje'))->toBeLessThan(strpos($instructions, Rag::NOT_AVAILABLE));
+});
+
 test('without passages the agent is told to reply with the not available sentence', function () {
     expect((new Rag)->instructions())
         ->toContain('nije pronađen nijedan odlomak')
@@ -92,6 +109,14 @@ test('there is no reply when the model says the knowledge base has no answer', f
     'not available' => Rag::NOT_AVAILABLE,
     'empty' => '  ',
 ]);
+
+test('words from the passage heading count as taken from the passages', function () {
+    $chunk = (new Chunk)->forceFill(['heading' => 'Kapecitabin', 'content' => 'Česta nuspojava je hand-foot sindrom.']);
+    $chunk->setRelation('document', (new Document)->forceFill(['title' => 'AI_lijekovi.docx']));
+
+    expect((new Rag(new Collection([$chunk])))->reply('Kapecitabin: česta nuspojava je hand-foot sindrom.'))
+        ->toBe('Kapecitabin: česta nuspojava je hand-foot sindrom.');
+});
 
 test('greetings are not checked against passages', function () {
     expect((new Rag)->reply('Pozdrav! Rado ću pomoći.'))->toBe('Pozdrav! Rado ću pomoći.');
