@@ -57,7 +57,7 @@ test('authenticated users can ask a question and receive an answer with sources'
     $response = $this->postJson('/api/chat', ['question' => 'What is Laravel?']);
 
     $response->assertOk()
-        ->assertJsonPath('data.answer', 'Laravel is a PHP web framework.')
+        ->assertJsonPath('data.answer', 'Laravel is a PHP web framework. '.Rag::DISCLAIMER)
         ->assertJsonPath('data.sources.0.document_id', $chunk->document_id)
         ->assertJsonPath('data.sources.0.document_title', 'Laravel Docs');
 
@@ -131,7 +131,7 @@ test('the conversation history stores the cleaned-up reply instead of the raw mo
         ->assertOk()
         ->assertJsonPath('data.0.role', 'user')
         ->assertJsonPath('data.1.role', 'assistant')
-        ->assertJsonPath('data.1.content', 'Svaka 3 tjedna.');
+        ->assertJsonPath('data.1.content', 'Svaka 3 tjedna. '.Rag::DISCLAIMER);
 });
 
 test('new conversations are titled with the question instead of a generated title', function () {

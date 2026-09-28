@@ -87,17 +87,17 @@ function ragWithPassage(string $content): Rag
     return new Rag(new Collection([$chunk]));
 }
 
-test('an answer taken from the passages is returned as is', function () {
+test('an answer taken from the passages is returned with the disclaimer', function () {
     $agent = ragWithPassage('Trastuzumab se aplicira kao intravenska infuzija ili subkutana injekcija.');
 
     expect($agent->reply('Trastuzumab se aplicira kao intravenska infuzija. Obratite se liječniku.'))
-        ->toBe('Trastuzumab se aplicira kao intravenska infuzija. Obratite se liječniku.');
+        ->toBe('Trastuzumab se aplicira kao intravenska infuzija. Obratite se liječniku. '.Rag::DISCLAIMER);
 });
 
 test('the not available sentence after an answer taken from the passages is removed', function (string $text) {
     $agent = ragWithPassage('Trastuzumab se aplicira kao intravenska infuzija ili subkutana injekcija.');
 
-    expect($agent->reply($text))->toBe('Trastuzumab se aplicira kao intravenska infuzija ili subkutana injekcija.');
+    expect($agent->reply($text))->toBe('Trastuzumab se aplicira kao intravenska infuzija ili subkutana injekcija. '.Rag::DISCLAIMER);
 })->with([
     'full sentence' => 'Trastuzumab se aplicira kao intravenska infuzija ili subkutana injekcija. '.Rag::NOT_AVAILABLE,
     'first half only' => "Trastuzumab se aplicira kao intravenska infuzija ili subkutana injekcija.\nNažalost, ta informacija nije dostupna u bazi znanja.",
@@ -124,7 +124,7 @@ test('words from the passage heading count as taken from the passages', function
     $chunk->setRelation('document', (new Document)->forceFill(['title' => 'AI_lijekovi.docx']));
 
     expect((new Rag(new Collection([$chunk])))->reply('Kapecitabin: česta nuspojava je hand-foot sindrom.'))
-        ->toBe('Kapecitabin: česta nuspojava je hand-foot sindrom.');
+        ->toBe('Kapecitabin: česta nuspojava je hand-foot sindrom. '.Rag::DISCLAIMER);
 });
 
 test('greetings are not checked against passages', function () {
