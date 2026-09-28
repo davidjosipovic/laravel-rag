@@ -37,7 +37,8 @@ test('chunking a document stores each docling chunk with its heading path', func
     ])->and($document->fresh()->status)->toBe(DocumentStatus::Chunked);
 
     Http::assertSent(fn (Request $request) => str_ends_with($request->url(), '/v1/chunk/hybrid/file')
-        && $request->isMultipart());
+        && collect($request->data())->pluck('contents', 'name')->only(['chunking_tokenizer', 'chunking_max_tokens'])->all()
+            === ['chunking_tokenizer' => 'Qwen/Qwen3-Embedding-0.6B', 'chunking_max_tokens' => '600']);
 });
 
 test('bold and uppercase lines are sent to docling as nested markdown headings', function () {

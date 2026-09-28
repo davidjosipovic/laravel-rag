@@ -35,7 +35,10 @@ class DoclingService
 
     /**
      * Chunk markdown with Docling's HybridChunker. Chunks never cross a heading
-     * boundary and stay under the tokenizer's token limit.
+     * boundary and stay under the token limit of the embedding model's tokenizer.
+     * Docling's default English tokenizer splits Croatian into many tokens, which made
+     * chunks a third of the size and cut sections mid-sentence; 600 Qwen tokens is
+     * about 200 words.
      *
      * @return list<array{text: string, heading: ?string}>
      */
@@ -46,7 +49,8 @@ class DoclingService
             ->post(config('services.docling.url').'/v1/chunk/hybrid/file', [
                 'chunking_include_raw_text' => 'true',
                 'chunking_use_markdown_tables' => 'true',
-                'chunking_max_tokens' => '512',
+                'chunking_tokenizer' => 'Qwen/Qwen3-Embedding-0.6B',
+                'chunking_max_tokens' => '600',
             ])
             ->throw();
 
