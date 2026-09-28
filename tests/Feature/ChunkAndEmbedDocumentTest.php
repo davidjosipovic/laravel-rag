@@ -1,28 +1,57 @@
 <?php
 
-use App\Actions\TextChunker;
 use App\Enums\DocumentStatus;
 use App\Jobs\ChunkDocument;
 use App\Jobs\EmbedChunks;
 use App\Models\Chunk;
 use App\Models\Document;
+use App\Services\DoclingService;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Http;
 use Laravel\Ai\Embeddings;
 
-test('chunking a document stores each chunk with its heading', function () {
+test('chunking a document stores each docling chunk with its heading path', function () {
     Bus::fake();
+    Http::fake([
+        '*/v1/chunk/hybrid/file' => Http::response([
+            'chunks' => [
+                ['text' => "Lijekovi\nDocetaksel\nNalazi 72 sata prije.", 'raw_text' => 'Nalazi 72 sata prije.', 'headings' => ['Lijekovi', 'Docetaksel']],
+                ['text' => 'Uvodni tekst.', 'raw_text' => 'Uvodni tekst.', 'headings' => null],
+            ],
+            'documents' => [],
+            'processing_time' => 0.1,
+        ]),
+    ]);
 
     $document = Document::factory()->create([
         'status' => DocumentStatus::Extracted,
-        'content' => "**Docetaksel**\nNalazi najviše 72 sata prije terapije.\n**Paklitaksel**\nPrimjenjuje se jednom tjedno.",
+        'content' => "# Lijekovi\n## Docetaksel\nNalazi 72 sata prije.",
     ]);
 
-    (new ChunkDocument($document->id))->handle(new TextChunker);
+    (new ChunkDocument($document->id))->handle(app(DoclingService::class));
 
     expect($document->chunks()->orderBy('chunk_index')->get(['heading', 'content'])->toArray())->toBe([
-        ['heading' => 'Docetaksel', 'content' => 'Nalazi najviše 72 sata prije terapije.'],
-        ['heading' => 'Paklitaksel', 'content' => 'Primjenjuje se jednom tjedno.'],
+        ['heading' => 'Lijekovi > Docetaksel', 'content' => 'Nalazi 72 sata prije.'],
+        ['heading' => null, 'content' => 'Uvodni tekst.'],
     ])->and($document->fresh()->status)->toBe(DocumentStatus::Chunked);
+
+    Http::assertSent(fn (Request $request) => str_ends_with($request->url(), '/v1/chunk/hybrid/file')
+        && $request->isMultipart());
+});
+
+test('bold and uppercase lines are sent to docling as nested markdown headings', function () {
+    Bus::fake();
+    Http::fake(['*/v1/chunk/hybrid/file' => Http::response(['chunks' => [], 'documents' => [], 'processing_time' => 0.1])]);
+
+    $document = Document::factory()->create([
+        'status' => DocumentStatus::Extracted,
+        'content' => "# Lijekovi\n**Dabrafenib****/****trametinib**\nCiljana terapija.\nLIPOSOMALNI DOKSORUBICIN\nTekst.\n**Važno je javiti se liječniku.**\n**Neuropatija - **Oštećenje živaca.",
+    ]);
+
+    (new ChunkDocument($document->id))->handle(app(DoclingService::class));
+
+    Http::assertSent(fn (Request $request) => collect($request->data())->firstWhere('name', 'files')['contents'] === "# Lijekovi\n## Dabrafenib/trametinib\nCiljana terapija.\n## LIPOSOMALNI DOKSORUBICIN\nTekst.\n**Važno je javiti se liječniku.**\n**Neuropatija - **Oštećenje živaca.");
 });
 
 test('embedding prepends the heading to the chunk content', function () {

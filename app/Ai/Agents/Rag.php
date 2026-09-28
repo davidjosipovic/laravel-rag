@@ -41,9 +41,9 @@ class Rag implements Agent, Conversational, HasProviderOptions
     public const float MIN_GROUNDING_WHEN_UNSURE = 0.75;
 
     /**
-     * Word stems of the closing advice the model adds, which never come from the passages.
+     * Added to every answer in code, so the model doesn't write it and grounding measures only the answer.
      */
-    private const array ADVICE_STEMS = ['liječ', 'ljeka', 'obrat', 'hitno', 'hitni', 'sluča', 'pozov', 'nazov', 'uvije', 'proce', 'indiv', 'konzu', 'savje'];
+    public const string DISCLAIMER = 'Za osobne savjete obratite se liječniku ili ljekarniku, a u hitnim slučajevima nazovite 112.';
 
     /**
      * @param  Collection<int, Chunk>  $chunks  Knowledge base passages retrieved for the current question.
@@ -91,8 +91,8 @@ class Rag implements Agent, Conversational, HasProviderOptions
             '- Odgovaraj sažeto: izravno, u nekoliko rečenica ili kratkoj listi, bez uvoda i ponavljanja pitanja.'."\n".
             '- Brojeve, doze, vremenske rokove i uvjete (npr. "tri ili više od", "najviše 72 sata") prenesi točno kako '.
             'pišu u izvoru. Kad izvor uz popis navodi uvjet (npr. koliko stavki mora biti ispunjeno), uvijek navedi i taj uvjet.'."\n".
-            '- Ne daj osobne savjete ni dijagnoze. Završi jednom kratkom rečenicom koja upućuje na liječnika ili '.
-            'ljekarnika, a za hitne slučajeve na broj 112.';
+            '- Ne daj osobne savjete ni dijagnoze. Ne dodaji završnu preporuku da se obrati liječniku ili ljekarniku, '.
+            'ona se dodaje automatski.';
     }
 
     /**
@@ -120,7 +120,9 @@ class Rag implements Agent, Conversational, HasProviderOptions
         $grounding = $this->grounding($answer);
         $minimum = $isUnsure ? self::MIN_GROUNDING_WHEN_UNSURE : self::MIN_GROUNDING;
 
-        return $grounding === null || $grounding >= $minimum ? $answer : null;
+        return $grounding === null || $grounding >= $minimum
+            ? $answer.' '.self::DISCLAIMER
+            : null;
     }
 
     /**
@@ -129,8 +131,7 @@ class Rag implements Agent, Conversational, HasProviderOptions
      */
     private function grounding(string $answer): ?float
     {
-        $answerStems = array_diff($this->stems($answer), self::ADVICE_STEMS);
-
+        $answerStems = $this->stems($answer);
         if ($answerStems === []) {
             return null;
         }

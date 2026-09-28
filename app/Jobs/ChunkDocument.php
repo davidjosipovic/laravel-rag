@@ -2,10 +2,10 @@
 
 namespace App\Jobs;
 
-use App\Actions\TextChunker;
 use App\Enums\DocumentStatus;
 use App\Models\Chunk;
 use App\Models\Document;
+use App\Services\DoclingService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -24,13 +24,13 @@ class ChunkDocument implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(TextChunker $chunker): void
+    public function handle(DoclingService $docling): void
     {
         $document = Document::findOrFail($this->documentId);
         Chunk::where('document_id', $this->documentId)->delete();
         $document->update(['status' => DocumentStatus::Chunking]);
 
-        foreach ($chunker->chunk($document->content) as $index => $chunk) {
+        foreach ($docling->chunk($document->content) as $index => $chunk) {
             Chunk::create([
                 'document_id' => $this->documentId,
                 'chunk_index' => $index,
