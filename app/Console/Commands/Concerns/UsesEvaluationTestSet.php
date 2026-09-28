@@ -37,9 +37,15 @@ trait UsesEvaluationTestSet
         $header = array_map(fn (?string $column): string => trim((string) preg_replace('/^\xEF\xBB\xBF/', '', (string) $column)), fgetcsv($handle, escape: '') ?: []);
         $questions = collect();
 
-        while (($row = fgetcsv($handle, escape: '')) !== false) {
-            if (count($row) !== count($header)) {
+        for ($line = 2; ($row = fgetcsv($handle, escape: '')) !== false; $line++) {
+            if ($row === [null]) {
                 continue;
+            }
+
+            if (count($row) !== count($header)) {
+                fclose($handle);
+
+                throw new RuntimeException("Line {$line} of {$path} has ".count($row).' columns instead of '.count($header).'; is a value with a comma missing its quotes?');
             }
 
             $values = array_combine($header, array_map(fn (?string $value): string => (string) $value, $row));
@@ -148,9 +154,13 @@ trait UsesEvaluationTestSet
         ];
     }
 
+    /**
+     * The current commit, with a "-dirty" suffix when there are uncommitted changes, so runs of
+     * different uncommitted code can't be mistaken for the same code.
+     */
     private function commit(): ?string
     {
-        $result = Process::run('git rev-parse --short HEAD');
+        $result = Process::run('git describe --always --dirty');
 
         return $result->successful() ? trim($result->output()) : null;
     }

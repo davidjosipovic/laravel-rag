@@ -11,7 +11,7 @@ use Illuminate\Support\Sleep;
 beforeEach(function () {
     Storage::fake('local');
     Sleep::fake();
-    Process::fake(['git rev-parse *' => Process::result('abc1234')]);
+    Process::fake(['git describe *' => Process::result('abc1234')]);
 
     Storage::disk('local')->put('evaluation/questions.csv', implode("\n", [
         "\u{FEFF}id,kategorija,pitanje,ocekivani_odgovor,izvor",
@@ -62,6 +62,8 @@ test('the retrieved passages are checked against the sources and the expected an
 
     $results = storedRetrieval();
     [$factual, $comparison, $unanswerable] = $results['questions'];
+
+    Process::assertRan('git describe --always --dirty');
 
     expect($results)->toMatchArray(['label' => 'Bigger chunks', 'commit' => 'abc1234'])
         ->and($factual)->toMatchArray(['source_hit' => true, 'coverage' => 0.8, 'missing_terms' => ['plani']])

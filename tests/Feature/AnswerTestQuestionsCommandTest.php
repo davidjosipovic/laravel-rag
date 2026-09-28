@@ -13,7 +13,7 @@ use Illuminate\Support\Sleep;
 beforeEach(function () {
     Storage::fake('local');
     Sleep::fake();
-    Process::fake(['git rev-parse *' => Process::result('abc1234')]);
+    Process::fake(['git describe *' => Process::result('abc1234')]);
     User::factory()->create();
 
     Storage::disk('local')->put('evaluation/questions.csv', implode("\n", [
@@ -126,3 +126,14 @@ test('a missing questions file fails with a clear message', function () {
 
     $this->artisan('rag:answer-test-questions')->assertFailed();
 })->throws(RuntimeException::class, 'Cannot read the questions file');
+
+test('a question line with a wrong number of columns fails instead of being skipped', function () {
+    Storage::disk('local')->put('evaluation/questions.csv', implode("\n", [
+        'id,kategorija,pitanje,ocekivani_odgovor,izvor',
+        'Q01,cinjenicno,Kada se vade nalazi?,Najviše 72 sata prije terapije.,AI_lijekovi.docx',
+        'Q02,cinjenicno,Koja je premedikacija?,Deksametazon, famotidin.,AI_lijekovi.docx',
+        '',
+    ]));
+
+    $this->artisan('rag:answer-test-questions');
+})->throws(RuntimeException::class, 'Line 3');

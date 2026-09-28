@@ -142,11 +142,7 @@ class AnswerTestQuestions extends Command
     private function questionResults(Collection $questions, array $runResults): array
     {
         return array_values($questions->map(fn (EvaluationQuestion $question, int $index): array => [
-            'id' => $question->id,
-            'category' => $question->category,
-            'question' => $question->question,
-            'expected_answer' => $question->expectedAnswer,
-            'source' => $question->source,
+            ...$question->toArray(),
             'runs' => $runResults[$index] ?? [],
         ])->all());
     }
@@ -162,9 +158,9 @@ class AnswerTestQuestions extends Command
         $questions = collect($results);
         $runs = $questions->flatMap(fn (array $question): array => $question['runs']);
 
-        $wronglyRefused = $questions->filter(fn (array $question): bool => $question['category'] !== 'neodgovorivo'
+        $wronglyRefused = $questions->filter(fn (array $question): bool => $question['category'] !== EvaluationQuestion::UNANSWERABLE
             && collect($question['runs'])->contains('refused', true));
-        $wronglyAnswered = $questions->filter(fn (array $question): bool => $question['category'] === 'neodgovorivo'
+        $wronglyAnswered = $questions->filter(fn (array $question): bool => $question['category'] === EvaluationQuestion::UNANSWERABLE
             && collect($question['runs'])->contains(fn (array $run): bool => ! $run['refused'] && $run['error'] === null));
         $failed = $questions->filter(fn (array $question): bool => collect($question['runs'])->contains(fn (array $run): bool => $run['error'] !== null));
 

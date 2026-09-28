@@ -144,11 +144,7 @@ class EvaluateRetrieval extends Command
         $missingTerms = array_values(array_diff($expectedTerms, $passageTerms));
 
         return [
-            'id' => $question->id,
-            'category' => $question->category,
-            'question' => $question->question,
-            'expected_answer' => $question->expectedAnswer,
-            'source' => $question->source,
+            ...$question->toArray(),
             'source_hit' => $sources === [] || $question->isUnanswerable() ? null : $retrievedDocuments->intersect($sources)->isNotEmpty(),
             'coverage' => $expectedTerms === [] ? null : round(1 - count($missingTerms) / count($expectedTerms), 3),
             'missing_terms' => $missingTerms,
@@ -187,7 +183,7 @@ class EvaluateRetrieval extends Command
     private function summarize(array $results): void
     {
         $questions = collect($results);
-        $answerable = $questions->reject(fn (array $question): bool => $question['category'] === 'neodgovorivo');
+        $answerable = $questions->reject(fn (array $question): bool => $question['category'] === EvaluationQuestion::UNANSWERABLE);
         $withSource = $questions->whereNotNull('source_hit');
         $withCoverage = $questions->whereNotNull('coverage');
 
@@ -198,7 +194,7 @@ class EvaluateRetrieval extends Command
         $this->components->twoColumnDetail('Bez odlomaka, a odgovor postoji', $this->questionIds($answerable->filter(fn (array $question): bool => $question['chunks'] === [])));
         $this->components->twoColumnDetail('Promašen izvor', $this->questionIds($withSource->where('source_hit', false)));
         $this->components->twoColumnDetail('Neodgovorivo, a ima odlomaka', $this->questionIds($questions->filter(
-            fn (array $question): bool => $question['category'] === 'neodgovorivo' && $question['chunks'] !== [],
+            fn (array $question): bool => $question['category'] === EvaluationQuestion::UNANSWERABLE && $question['chunks'] !== [],
         )));
 
         $this->newLine();
