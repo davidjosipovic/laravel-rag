@@ -45,6 +45,32 @@ class Rag implements Agent, Conversational, HasProviderOptions
      */
     public const string DISCLAIMER = 'Za osobne savjete obratite se liječniku ili ljekarniku, a u hitnim slučajevima nazovite 112.';
 
+    /*
+     * To let the model search the knowledge base itself with the SearchKnowledgeBase tool instead:
+     *
+     * 1. Let the agent call the tool, and give it a few steps for the search and the answer:
+     *
+     *    #[MaxSteps(5)]
+     *    class Rag implements Agent, Conversational, HasProviderOptions, HasTools
+     *
+     *    public function __construct(private SearchKnowledgeBase $search) {}
+     *
+     *    public function tools(): iterable
+     *    {
+     *        return [$this->search];
+     *    }
+     *
+     * 2. In instructions(), drop the passages ($this->context()) and tell the model to search first:
+     *    'Za svako pitanje o lijekovima, terapijama, nuspojavama ili dozama prvo pretraži bazu znanja
+     *    alatom za pretraživanje i odgovaraj isključivo iz onoga što alat vrati.'
+     *
+     * 3. The chunks are only known after the model has searched, so read them from the tool instead
+     *    of $this->chunks, in reply() and grounding(): $this->search->retrievedChunks.
+     *
+     * 4. In AnswerQuestion::handle(), stop searching in code: build the agent with app(Rag::class) and
+     *    return $agent->search->retrievedChunks as the answer's sources.
+     */
+
     /**
      * @param  Collection<int, Chunk>  $chunks  Knowledge base passages retrieved for the current question.
      */
