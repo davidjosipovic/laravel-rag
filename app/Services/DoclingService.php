@@ -46,6 +46,7 @@ class DoclingService
             ->post(config('services.docling.url').'/v1/chunk/hybrid/file', [
                 'chunking_include_raw_text' => 'true',
                 'chunking_use_markdown_tables' => 'true',
+                'chunking_max_tokens' => '512',
             ])
             ->throw();
 
