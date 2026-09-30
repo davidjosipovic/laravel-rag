@@ -37,11 +37,7 @@ class EmbedChunks implements ShouldQueue
             ->chunkById(
                 10,
                 function ($chunks) use (&$processed) {
-                    $inputs = $chunks->map(
-                        fn (Chunk $chunk) => $chunk->heading
-                            ? $chunk->heading."\n\n".$chunk->content
-                            : $chunk->content
-                    )->all();
+                    $inputs = $chunks->map(fn (Chunk $chunk): string => $chunk->searchText())->all();
 
                     $vectors = Embeddings::for($inputs)->generate()->embeddings;
 

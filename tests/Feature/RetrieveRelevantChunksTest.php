@@ -53,3 +53,13 @@ test('it returns nothing without calling the reranker when no chunk matches', fu
 
     Reranking::assertNothingReranked();
 });
+
+test('chunks are reranked together with their heading', function () {
+    Chunk::factory()->create(['heading' => 'ERLOTINIB', 'content' => 'Potreban je oprez uz gospinu travu.']);
+
+    Reranking::fake();
+
+    app(RetrieveRelevantChunks::class)->handle('gospina trava');
+
+    Reranking::assertReranked(fn ($prompt): bool => $prompt->documents === ["ERLOTINIB\n\nPotreban je oprez uz gospinu travu."]);
+});

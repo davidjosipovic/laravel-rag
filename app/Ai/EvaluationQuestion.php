@@ -18,6 +18,7 @@ readonly class EvaluationQuestion
         public string $question,
         public string $expectedAnswer,
         public string $source,
+        public string $expectedPassages = '',
     ) {}
 
     public function isUnanswerable(): bool
@@ -33,6 +34,20 @@ readonly class EvaluationQuestion
     public function sourceDocuments(): array
     {
         return array_values(array_filter(array_map('trim', explode(';', $this->source))));
+    }
+
+    /**
+     * The passages that contain the answer, identified by the last part of their heading. The test set
+     * separates the passages with semicolons, and alternatives of which any one is enough with "|".
+     *
+     * @return list<list<string>>
+     */
+    public function expectedPassages(): array
+    {
+        return array_values(array_map(
+            fn (string $passage): array => array_values(array_filter(array_map('trim', explode('|', $passage)))),
+            array_filter(array_map('trim', explode(';', $this->expectedPassages))),
+        ));
     }
 
     /**

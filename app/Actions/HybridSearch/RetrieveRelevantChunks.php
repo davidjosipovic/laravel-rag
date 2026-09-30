@@ -16,8 +16,8 @@ class RetrieveRelevantChunks
     /**
      * Find the chunks that answer the query, most relevant first.
      *
-     * Full-text and vector search results are fused with reciprocal rank fusion, then reranked,
-     * and only chunks the reranker considers relevant are kept. Each chunk gets the reranker's score
+     * Full-text and vector search results are fused with reciprocal rank fusion, then reranked
+     * together with their headings, and only chunks the reranker considers relevant are kept. Each chunk gets the reranker's score
      * as its `relevance` attribute.
      *
      * @return Collection<int, Chunk>
@@ -37,7 +37,7 @@ class RetrieveRelevantChunks
 
         $candidates = Chunk::with('document:id,title')->whereIn('id', $ids)->get()->values();
 
-        $ranking = Reranking::of($candidates->pluck('content')->all())
+        $ranking = Reranking::of($candidates->map(fn (Chunk $chunk): string => $chunk->searchText())->all())
             ->limit($limit)
             ->rerank($query);
 

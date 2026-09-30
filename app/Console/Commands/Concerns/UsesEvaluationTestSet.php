@@ -56,6 +56,7 @@ trait UsesEvaluationTestSet
                 question: $values['pitanje'],
                 expectedAnswer: $values['ocekivani_odgovor'],
                 source: $values['izvor'] ?? '',
+                expectedPassages: $values['odlomci'] ?? '',
             ));
         }
 

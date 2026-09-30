@@ -113,7 +113,7 @@ test('changes against the previous results are listed', function () {
     $this->artisan('rag:evaluate-retrieval', ['--only' => 'Q01,Q64', '--compare' => 'latest'])
         ->expectsOutputToContain('Usporedba s baseline')
         ->expectsTable(['Pitanje', 'Prije', 'Sad'], [
-            ['Q01', 'ne / 0,0 %', 'da / 100,0 %'],
+            ['Q01', 'ne / 0,0 % / –', 'da / 100,0 % / –'],
         ])
         ->assertSuccessful();
 });
@@ -126,3 +126,31 @@ test('the evaluation stops when the reranker stays rate limited', function () {
 
     $this->artisan('rag:evaluate-retrieval', ['--only' => 'Q01']);
 })->throws(RuntimeException::class, 'Retrieval is not available');
+
+test('passage recall and reciprocal rank are measured against the expected passages', function () {
+    Storage::disk('local')->put('evaluation/questions.csv', implode("\n", [
+        'id,kategorija,pitanje,ocekivani_odgovor,izvor,odlomci',
+        'Q49,agregacija,Koji lijekovi uzrokuju sindrom šaka-stopalo?,Kapecitabin i regorafenib.,AI_lijekovi.docx,Kapecitabin;REGORAFENIB',
+        'Q26,cinjenicno,Što je zlatni standard?,Magnetska rezonancija.,gliom.docx,Radiološka dijagnostika|Dijagnoza',
+        'Q64,neodgovorivo,Koliko košta Ferinject?,Nije navedeno.,,',
+    ]));
+
+    $chunk = fn (string $heading): Chunk => Chunk::factory()->create(['heading' => $heading, 'content' => 'Tekst.']);
+
+    fakeRetrieval([
+        'Koji lijekovi uzrokuju sindrom šaka-stopalo?' => [$chunk('Paklitaksel'), $chunk('Kapecitabin')],
+        'Što je zlatni standard?' => [$chunk('Činjenice o gliomu > **Dijagnoza **')],
+        'Koliko košta Ferinject?' => [$chunk('Ferinject')],
+    ]);
+
+    $this->artisan('rag:evaluate-retrieval')
+        ->expectsOutputToContain('Recall odlomaka')
+        ->expectsOutputToContain('1 (Q49)')
+        ->assertSuccessful();
+
+    [$aggregation, $factual, $unanswerable] = storedRetrieval()['questions'];
+
+    expect($aggregation)->toMatchArray(['passage_recall' => 0.5, 'reciprocal_rank' => 0.5, 'missing_passages' => ['REGORAFENIB']])
+        ->and($factual)->toMatchArray(['passage_recall' => 1, 'reciprocal_rank' => 1, 'missing_passages' => []])
+        ->and($unanswerable)->toMatchArray(['passage_recall' => null, 'reciprocal_rank' => null]);
+});

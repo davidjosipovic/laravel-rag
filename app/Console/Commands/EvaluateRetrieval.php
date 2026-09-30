@@ -11,6 +11,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * Evaluates only the search: every test set question goes through the same retrieval as
@@ -22,10 +23,14 @@ use Illuminate\Support\Facades\Storage;
  * - coverage: the share of the expected answer's word stems and numbers found in the passages.
  *   Wording that is only in the expected answer keeps it below 100 %, so it is meant for
  *   comparing runs rather than as an absolute score;
+ * - passage recall: the share of the passages listed in the odlomci column that were retrieved,
+ *   matched by the last part of their heading; unlike the source hit it shows whether the right
+ *   passages were found, not just any passage of the right document;
+ * - reciprocal rank: 1 / the position of the first expected passage, averaged into the MRR;
  * - unanswerable questions should retrieve nothing above the minimum relevance.
  *
  * @phpstan-type RetrievedChunk array{id: int, document: ?string, heading: ?string, relevance: ?float}
- * @phpstan-type QuestionResult array{id: string, category: string, question: string, expected_answer: string, source: string, source_hit: ?bool, coverage: ?float, missing_terms: list<string>, chunks: list<RetrievedChunk>}
+ * @phpstan-type QuestionResult array{id: string, category: string, question: string, expected_answer: string, source: string, source_hit: ?bool, coverage: ?float, missing_terms: list<string>, passage_recall: ?float, reciprocal_rank: ?float, missing_passages: list<string>, chunks: list<RetrievedChunk>}
  */
 #[Signature('rag:evaluate-retrieval
     {--questions= : CSV with id, kategorija, pitanje, ocekivani_odgovor and izvor columns (default: storage/app/private/evaluation/questions.csv)}
@@ -143,11 +148,23 @@ class EvaluateRetrieval extends Command
         $passageTerms = $this->terms($chunks->map(fn (Chunk $chunk): string => $chunk->heading.' '.$chunk->content)->implode(' '));
         $missingTerms = array_values(array_diff($expectedTerms, $passageTerms));
 
+        $expectedPassages = $question->isUnanswerable() ? [] : $question->expectedPassages();
+        $headings = $chunks->toBase()->map(fn (Chunk $chunk): string => $this->headingName((string) $chunk->heading))->values();
+        $missingPassages = array_values(array_filter(
+            $expectedPassages,
+            fn (array $alternatives): bool => $headings->intersect(array_map($this->headingName(...), $alternatives))->isEmpty(),
+        ));
+        $expectedNames = collect($expectedPassages)->flatten()->map($this->headingName(...));
+        $firstHit = $headings->search(fn (string $heading): bool => $expectedNames->contains($heading));
+
         return [
             ...$question->toArray(),
             'source_hit' => $sources === [] || $question->isUnanswerable() ? null : $retrievedDocuments->intersect($sources)->isNotEmpty(),
             'coverage' => $expectedTerms === [] ? null : round(1 - count($missingTerms) / count($expectedTerms), 3),
             'missing_terms' => $missingTerms,
+            'passage_recall' => $expectedPassages === [] ? null : round(1 - count($missingPassages) / count($expectedPassages), 3),
+            'reciprocal_rank' => $expectedPassages === [] ? null : ($firstHit === false ? 0.0 : round(1 / ($firstHit + 1), 3)),
+            'missing_passages' => array_map(fn (array $alternatives): string => implode('|', $alternatives), $missingPassages),
             'chunks' => array_values($chunks->map(fn (Chunk $chunk): array => [
                 'id' => $chunk->id,
                 'document' => $chunk->document->title,
@@ -155,6 +172,15 @@ class EvaluateRetrieval extends Command
                 'relevance' => is_numeric($chunk->getAttribute('relevance')) ? round((float) $chunk->getAttribute('relevance'), 4) : null,
             ])->all()),
         ];
+    }
+
+    /**
+     * The last part of a heading path, without Markdown emphasis, e.g. "Činjenice o gliomu > **Dijagnoza **"
+     * becomes "dijagnoza", so the test set can name a passage by its own title.
+     */
+    private function headingName(string $heading): string
+    {
+        return mb_strtolower(trim(str_replace('*', '', (string) Str::afterLast($heading, '>'))));
     }
 
     /**
@@ -186,11 +212,15 @@ class EvaluateRetrieval extends Command
         $answerable = $questions->reject(fn (array $question): bool => $question['category'] === EvaluationQuestion::UNANSWERABLE);
         $withSource = $questions->whereNotNull('source_hit');
         $withCoverage = $questions->whereNotNull('coverage');
+        $withPassages = $questions->whereNotNull('passage_recall');
 
         $this->newLine();
         $this->components->twoColumnDetail('Pogođen izvor', $withSource->where('source_hit', true)->count().'/'.$withSource->count());
         $this->components->twoColumnDetail('Pokrivenost odgovora (prosjek)', $this->percent((float) $withCoverage->avg('coverage')));
         $this->components->twoColumnDetail('Pokrivenost ≥ '.$this->percent(self::COVERED), $withCoverage->where('coverage', '>=', self::COVERED)->count().'/'.$withCoverage->count());
+        $this->components->twoColumnDetail('Recall odlomaka (prosjek)', $this->percent((float) $withPassages->avg('passage_recall')));
+        $this->components->twoColumnDetail('MRR', number_format((float) $withPassages->avg('reciprocal_rank'), 3, ','));
+        $this->components->twoColumnDetail('Nedostaju očekivani odlomci', $this->questionIds($withPassages->where('passage_recall', '<', 1)));
         $this->components->twoColumnDetail('Bez odlomaka, a odgovor postoji', $this->questionIds($answerable->filter(fn (array $question): bool => $question['chunks'] === [])));
         $this->components->twoColumnDetail('Promašen izvor', $this->questionIds($withSource->where('source_hit', false)));
         $this->components->twoColumnDetail('Neodgovorivo, a ima odlomaka', $this->questionIds($questions->filter(
@@ -199,18 +229,19 @@ class EvaluateRetrieval extends Command
 
         $this->newLine();
         $this->table(
-            ['Kategorija', 'Pitanja', 'Pogođen izvor', 'Pokrivenost'],
+            ['Kategorija', 'Pitanja', 'Pogođen izvor', 'Pokrivenost', 'Recall odlomaka'],
             $questions->groupBy('category')->map(fn (Collection $group, string $category): array => [
                 $category,
                 $group->count(),
                 $group->whereNotNull('source_hit')->isEmpty() ? '–' : $group->where('source_hit', true)->count().'/'.$group->whereNotNull('source_hit')->count(),
                 $group->whereNotNull('coverage')->isEmpty() ? '–' : $this->percent((float) $group->whereNotNull('coverage')->avg('coverage')),
+                $group->whereNotNull('passage_recall')->isEmpty() ? '–' : $this->percent((float) $group->whereNotNull('passage_recall')->avg('passage_recall')),
             ])->values()->all(),
         );
     }
 
     /**
-     * List the questions whose source hit or coverage changed since the earlier results.
+     * List the questions whose source hit, coverage or passage recall changed since the earlier results.
      *
      * @param  list<QuestionResult>  $questions
      * @param  array{label: string, questions: array<mixed>}  $comparison
@@ -229,19 +260,21 @@ class EvaluateRetrieval extends Command
 
             $previousCoverage = is_numeric($previous['coverage'] ?? null) ? (float) $previous['coverage'] : null;
             $previousHit = is_bool($previous['source_hit'] ?? null) ? $previous['source_hit'] : null;
+            $previousRecall = is_numeric($previous['passage_recall'] ?? null) ? (float) $previous['passage_recall'] : null;
             $coverageChanged = $previousCoverage !== null && $question['coverage'] !== null && abs($question['coverage'] - $previousCoverage) >= self::COVERAGE_CHANGE;
+            $recallChanged = $previousRecall !== null && $question['passage_recall'] !== null && $question['passage_recall'] !== $previousRecall;
 
-            if ($coverageChanged || $previousHit !== $question['source_hit']) {
+            if ($coverageChanged || $recallChanged || $previousHit !== $question['source_hit']) {
                 $changes[] = [
                     $question['id'],
-                    $this->hitLabel($previousHit).' / '.($previousCoverage === null ? '–' : $this->percent($previousCoverage)),
-                    $this->hitLabel($question['source_hit']).' / '.($question['coverage'] === null ? '–' : $this->percent($question['coverage'])),
+                    $this->hitLabel($previousHit).' / '.$this->optionalPercent($previousCoverage).' / '.$this->optionalPercent($previousRecall),
+                    $this->hitLabel($question['source_hit']).' / '.$this->optionalPercent($question['coverage']).' / '.$this->optionalPercent($question['passage_recall']),
                 ];
             }
         }
 
         $this->newLine();
-        $this->components->info("Usporedba s {$comparison['label']} (izvor / pokrivenost)");
+        $this->components->info("Usporedba s {$comparison['label']} (izvor / pokrivenost / recall odlomaka)");
 
         if ($changes === []) {
             $this->components->twoColumnDetail('Promjene', 'nema');
@@ -250,6 +283,11 @@ class EvaluateRetrieval extends Command
         }
 
         $this->table(['Pitanje', 'Prije', 'Sad'], $changes);
+    }
+
+    private function optionalPercent(?float $share): string
+    {
+        return $share === null ? '–' : $this->percent($share);
     }
 
     private function hitLabel(?bool $hit): string

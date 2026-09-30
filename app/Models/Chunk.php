@@ -26,6 +26,15 @@ class Chunk extends Model
     }
 
     /**
+     * The text embedded and reranked: the heading tells which medicine or topic the content is about,
+     * which a chunk split from the middle of a section doesn't say itself.
+     */
+    public function searchText(): string
+    {
+        return $this->heading ? $this->heading."\n\n".$this->content : $this->content;
+    }
+
+    /**
      * @return BelongsTo<Document, $this>
      */
     public function document(): BelongsTo

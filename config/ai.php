@@ -57,11 +57,13 @@ return [
     | scale differs per reranker, so recalibrate it when switching (0.3 is
     | calibrated for Cohere: relevant chunks scored 0.33–0.94, off-topic
     | questions at most 0.24). The local qwen3-reranker scores almost
-    | binary (relevant ~0.99, unrelated below 0.1, a colloquial question's
-    | only relevant chunk 0.24), so use 0.15 with it; 0.3 and above drop
-    | that chunk. At most max_chunks chunks are given to the model; more
-    | than 5 added no relevant passages on the test set and confused the
-    | small local model.
+    | binary (relevant ~0.99, noise below 0.02, a colloquial question's
+    | only relevant chunk 0.17), so use 0.05 with it. The threshold does
+    | not tell unanswerable questions apart: their on-topic chunks score
+    | 0.9 and more, so refusing is left to the model. At most max_chunks
+    | chunks are given to the model; 5 suits the small local model, while
+    | a stronger model benefits from 10 on questions listing several
+    | medicines (all relevant passages of Q51 were in the top 10).
     |
     */
 
