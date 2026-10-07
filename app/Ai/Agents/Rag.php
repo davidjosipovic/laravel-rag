@@ -52,7 +52,12 @@ class Rag implements Agent, Conversational, HasTools
             'Do not give personal advice or diagnoses. Always recommend a doctor or pharmacist, and in an emergency calling 112. '.
             'Always answer in Croatian. '.
             'Keep answers short and to the point: at most 5 sentences or a short bullet list. '.
-            'Include only what the user asked; do not repeat the question or add general introductions.';
+            'Answer only the specific thing asked. Do not add other facts from the passages, even if related, unless the '.
+            'question asks for them. Do not repeat the question or add general introductions. '.
+            'In list questions, include an item only if its own passage states exactly the property asked about. '.
+            'A similar but different statement does not count. '.
+            'Keep abbreviations, medical terms and lab names exactly as written in the passages; never expand an '.
+            'abbreviation the passage does not expand.';
     }
 
     /**
