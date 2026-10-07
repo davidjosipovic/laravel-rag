@@ -113,6 +113,14 @@ test('the run stops when answering stays rate limited', function () {
     $this->artisan('rag:answer-test-questions', ['--only' => 'Q01']);
 })->throws(RuntimeException::class, 'Answering is not available');
 
+test('an answer containing the not available sentence counts as refused', function () {
+    fakeAnswers(['Koliko košta Ferinject?' => Rag::NOT_AVAILABLE."\n"]);
+
+    $this->artisan('rag:answer-test-questions', ['--only' => 'Q64'])->assertSuccessful();
+
+    expect(storedAnswers()['questions'][0]['runs'][0]['refused'])->toBeTrue();
+});
+
 test('only the selected questions are asked', function () {
     fakeAnswers(['Koliko košta Ferinject?' => Rag::NOT_AVAILABLE]);
 

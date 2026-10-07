@@ -11,17 +11,12 @@ use Laravel\Ai\Tools\Request;
 use Stringable;
 
 /**
- * Lets the agent search the knowledge base itself, instead of AnswerQuestion searching before every question.
- *
- * Not used at the moment: the local model does not reliably decide to call a tool on its own, so the search
- * always runs in code (see AnswerQuestion). It is kept so the tool call can be switched back on; how to wire
- * it into the Rag agent is described in the comment above Rag::__construct(). The tool call was removed in
- * commit ec57817.
+ * Lets the agent search the knowledge base with hybrid search.
  */
 class SearchKnowledgeBase implements Tool
 {
     /**
-     * The chunks found by the last search, so they can be returned as the answer's sources.
+     * The chunks found by all searches for the current question, so they can be returned as the answer's sources.
      *
      * @var Collection<int, Chunk>
      */
@@ -37,9 +32,7 @@ class SearchKnowledgeBase implements Tool
      */
     public function description(): Stringable|string
     {
-        return 'Pretraži bazu znanja o onkološkim lijekovima i terapijama. '.
-            'Koristi za sva pitanja o lijekovima, nuspojavama, dozama i primjeni. '.
-            'Upiši pitanje ili pojam prirodnim jezikom.';
+        return 'Search the knowledge base of oncology documents for passages that answer the user\'s message.';
     }
 
     /**
@@ -47,13 +40,15 @@ class SearchKnowledgeBase implements Tool
      */
     public function handle(Request $request): Stringable|string
     {
-        $this->retrievedChunks = $this->retrieveRelevantChunks->handle(trim((string) $request['query']));
+        $chunks = $this->retrieveRelevantChunks->handle(trim((string) $request['query']));
 
-        if ($this->retrievedChunks->isEmpty()) {
-            return 'Nema rezultata u bazi znanja za taj upit.';
+        $this->retrievedChunks = $this->retrievedChunks->merge($chunks);
+
+        if ($chunks->isEmpty()) {
+            return 'No results in the knowledge base for this query.';
         }
 
-        return $this->retrievedChunks
+        return $chunks
             ->map(fn (Chunk $chunk, int $index): string => '['.($index + 1).'] '.$chunk->document->title
                 .($chunk->heading ? ' — '.$chunk->heading : '')."\n".$chunk->content)
             ->implode("\n\n");
@@ -65,7 +60,11 @@ class SearchKnowledgeBase implements Tool
     public function schema(JsonSchema $schema): array
     {
         return [
-            'query' => $schema->string()->required(),
+            'query' => $schema->string()
+                ->description('The user\'s question in full, in Croatian, as they wrote it, not shortened to keywords. '.
+                    'For a follow-up, add what it refers to from the conversation, e.g. "a koje su nuspojave?" '.
+                    'becomes "Koje su nuspojave docetaksela?".')
+                ->required(),
         ];
     }
 }

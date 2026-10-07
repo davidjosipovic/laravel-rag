@@ -123,7 +123,7 @@ class AnswerTestQuestions extends Command
 
         return [
             'answer' => $answer->answer,
-            'refused' => $answer->answer === Rag::NOT_AVAILABLE,
+            'refused' => str_contains($answer->answer, Rag::NOT_AVAILABLE),
             'error' => null,
             'passages' => array_values($answer->chunks->map(fn (Chunk $chunk): array => [
                 'document' => $chunk->document->title,
