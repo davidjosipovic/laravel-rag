@@ -2,6 +2,7 @@
 
 namespace App\Ai\Agents;
 
+use App\Ai\Middleware\StripControlTokens;
 use App\Ai\Tools\SearchKnowledgeBase;
 use App\Models\Chunk;
 use Illuminate\Database\Eloquent\Collection;
@@ -10,6 +11,7 @@ use Laravel\Ai\Attributes\MaxTokens;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
+use Laravel\Ai\Contracts\HasMiddleware;
 use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Promptable;
@@ -19,7 +21,7 @@ use Laravel\Ai\Promptable;
  */
 #[MaxSteps(5)]
 #[MaxTokens(600)]
-class Rag implements Agent, Conversational, HasTools
+class Rag implements Agent, Conversational, HasMiddleware, HasTools
 {
     use Promptable, RemembersConversations;
 
@@ -58,6 +60,18 @@ class Rag implements Agent, Conversational, HasTools
             'A similar but different statement does not count. '.
             'Keep abbreviations, medical terms and lab names exactly as written in the passages; never expand an '.
             'abbreviation the passage does not expand.';
+    }
+
+    /**
+     * Get the agent's middleware.
+     *
+     * @return array<int, object>
+     */
+    public function middleware(): array
+    {
+        return [
+            new StripControlTokens,
+        ];
     }
 
     /**

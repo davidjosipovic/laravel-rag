@@ -84,6 +84,21 @@ test('answers without a knowledge base search have no sources', function () {
         ->assertJsonPath('data.sources', []);
 });
 
+test('leaked control tokens are removed from the answer and the stored conversation', function () {
+    Sanctum::actingAs(User::factory()->create());
+
+    Rag::fake(['<|channel>thought <channel|>Pozdrav!']);
+
+    $conversationId = $this->postJson('/api/chat', ['question' => 'Bok!'])
+        ->assertOk()
+        ->assertJsonPath('data.answer', 'Pozdrav!')
+        ->json('data.conversation_id');
+
+    $this->getJson("/api/chat/history/{$conversationId}")
+        ->assertOk()
+        ->assertJsonPath('data.1.content', 'Pozdrav!');
+});
+
 test('new conversations are titled with the question instead of a generated title', function () {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
