@@ -2,6 +2,7 @@
 
 namespace App\Ai\Agents;
 
+use App\Ai\Middleware\RetryEmptyAnswer;
 use App\Ai\Middleware\StripControlTokens;
 use App\Ai\Tools\SearchKnowledgeBase;
 use App\Models\Chunk;
@@ -55,8 +56,7 @@ class Rag implements Agent, Conversational, HasMiddleware, HasTools
             'Always answer in Croatian. '.
             'Keep answers short and to the point: at most 5 sentences or a short bullet list. '.
             'Answer only the specific thing asked. Do not add other facts from the passages, even if related, unless the '.
-            'question asks for them. For example, if asked when something starts, do not add how long it lasts or what '.
-            'happens later. Do not repeat the question or add general introductions. '.
+            'question asks for them. Do not repeat the question or add general introductions. '.
             'If a passage gives a specific instruction for exactly the situation asked about (what to do, take, bring or '.
             'avoid), include it. '.
             'In list questions, include an item only if its own passage states exactly the property asked about. '.
@@ -67,13 +67,15 @@ class Rag implements Agent, Conversational, HasMiddleware, HasTools
     }
 
     /**
-     * Get the agent's middleware.
+     * Get the agent's middleware. The retry wraps the token stripping, so an answer that was only control tokens
+     * counts as empty too.
      *
      * @return array<int, object>
      */
     public function middleware(): array
     {
         return [
+            new RetryEmptyAnswer,
             new StripControlTokens,
         ];
     }
